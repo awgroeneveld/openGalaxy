@@ -1,7 +1,7 @@
   /* This file is part of openGalaxy.
    *
    * opengalaxy - a SIA receiver for Galaxy security control panels.
-   * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+   * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
    *
    * This program is free software: you can redistribute it and/or modify
    * it under the terms of the GNU General Public License version 2 as
@@ -144,9 +144,6 @@
    *
    */
 
-// TODO: don't use recursive function calls, it uses a lot of memory when
-// parsing large objects/arrays... (fortunately we only parse small objects)
-
 #include "atomic.h"
 
 #include <stdbool.h>
@@ -155,6 +152,11 @@
 #include <string.h>
 
 #include "json.h"
+
+#ifdef __ANDROID_API__
+#include <android/log.h>
+#define printf(...) __android_log_print(ANDROID_LOG_ERROR, "JSON.C", ##__VA_ARGS__)
+#endif
 
 static json_object *        json_parse_object       ( const char *json, int *position );
 static json_item *          json_parse_items        ( const char *json, int *position );

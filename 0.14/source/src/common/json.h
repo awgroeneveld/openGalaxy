@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -119,6 +119,9 @@ typedef struct json_value_boolean_t {
 
 
 typedef struct json_value_nill_t {   // A NULL item contains nothing
+  // Set a fixed struct size to ensure the size of the
+  // struct is the same in both C and C++ [-Wextern-c-compat].
+  char dummy;
 } json_value_nill;
 
 

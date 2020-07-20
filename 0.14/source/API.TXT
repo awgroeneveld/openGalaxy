@@ -5,7 +5,7 @@ The following is a list of commands that may be executed by using the
 'openGalaxy-websocket-protocol' websockets interface:
 
 To execute any of the commands described here, open the openGalaxy
-webinterface with a webbrowser. Then and open the 'Commandline' from the menu
+webinterface with a webbrowser and open the 'Commandline' from the menu
 in the status window.
 
 You may now enter any command in the entry field and press enter.
@@ -13,7 +13,18 @@ You may now enter any command in the entry field and press enter.
 
 Please note that not all Galaxy firmware revisions support every
 command listed here. Where known the needed firmware revision is listed
-but there may be many omissions...
+but there may be omissions. When applicable the command references the
+following notes:
+
+1. Requires Galaxy panel firmware >= v1.20
+2. For RS232 module firmware > v0.06
+3. Requires Galaxy panel firmware >= v1.12
+4.
+5. Requires Galaxy panel firmware >= v4.00
+6. Requires Galaxy panel firmware >= v5.00 (Galaxy G3 Series)
+7. Requires Galaxy panel firmware >= v600 (Galaxy Dimension)
+8.
+9. Requires Galaxy panel firmware >= v6xx (Galaxy Dimension)
 
 Whenever any of the commands require a 'blknum' or area id you may provide
 either a number (1-32) or the area id (A1..A8, B1..B8, C1..C8 or D1..D8).
@@ -140,7 +151,7 @@ action  =  UNSET        Disarm an area
                          0 = unset
                          1 = set
                          2 = partial
-           READY        Area status with more states
+           READY        Area status with more states (area 0: panel >= V4.00)
                          0 = unset
                          1 = set
                          2 = partial
@@ -151,26 +162,26 @@ action  =  UNSET        Disarm an area
                          1 = Alarm
                          2 = Reset required
 
-The commands UNSET, SET, PARTIAL, ABORT and FORCE return the
+The actions UNSET, SET, PARTIAL, ABORT and FORCE return the
 default JSON object ('typeId' = 1).
 
-For other commands that operate on a single area:
+For other actions that operate on a SINGLE area:
 
   { typeId:%u, typeDesc:"%s", areaState:%u }
 
 where 'typeId' is:
-  3 for STATE,
-  5 for ALARM and
-  7 for READY
+  JSON_AREA_ARMED_STATE for the STATE action,
+  JSON_AREA_ALARM_STATE for the ALARM action and
+  JSON_AREA_READY_STATE for the READY action
     
-For other commands that operate on a all areas:
+For other actions that operate on a ALL areas:
 
   { "typeId":%u, "typeDesc":"%s", "areaState":[32] }
 
 Where 'typeId' is:
-  4 for STATE,
-  6 for ALARM and
-  8 for READY
+  JSON_ALL_AREA_ARMED_STATE for the STATE action,
+  JSON_ALL_AREA_ALARM_STATE for the ALARM action and
+  JSON_ALL_AREA_READY_STATE for the READY action.
 
 And 'areaState' has 32 bytes with one area state each.
 
@@ -256,7 +267,7 @@ setting the state of an existing zone WILL corrupt its programming!!!
 (It changes the area id and zone type to a random value.)
 
 Not specifying the 'desc' option when changing the state of an existing
-zone will remove the zone desription from the panels programming!
+zone will remove the zone description from the panels programming!
 
 
 -- ZONES ------------------------------------------------------------------
@@ -288,8 +299,8 @@ Where 'typeId' is:
   15 for RSTATE and
   16 for OMITTED
 
-Note: See 'struct GalaxyZonesState_t' in galaxy.h for the format
-      of the returned byte array 'zoneState' in the JSON reply.
+Note: See 'struct GalaxyZonesState_t' in src/server/Galaxy.hpp for the
+      format of the returned byte array 'zoneState' in the JSON reply.
 
 Note: Some of these functions require a panel firmware >= V1.20
 
@@ -310,7 +321,7 @@ action  =  ON           Turn the output on
 blknum  =  Area number (1-32, A1-A8, B1-B8, C1-C8, D1-D8)
            Special area 0 operates on all areas.
            When not specified, area 0 is implied.
-           Only has effect for actions on output-types.
+           Only has effect if <nr> is an output type.
 
 Returns a JSON object formatted like:
 
@@ -319,9 +330,6 @@ Returns a JSON object formatted like:
     "typeDesc":"%s",
     "outputState":[32]
   }
-
-Note: See 'struct GalaxyOutputs32_t' in galaxy.h for the format
-      of the returned byte array 'outputState' in the JSON reply.
 
 Note: Most of the output functions require a panel firmware >= V1.20
       The GETTALL function seems to work on my V1.07
@@ -333,7 +341,7 @@ Note: GETALL returns an array of 32 bytes with
 Note: When setting by output number the panel will ignore
       that outputs programming and just performs <action>.
       When setting by type, the outputs will follow their
-      normal programming.
+      normal programming (ie. latch, reflex or pulse).
 
 
 -- POLL -------------------------------------------------------------------

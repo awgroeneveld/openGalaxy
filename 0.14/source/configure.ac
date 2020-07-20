@@ -1,7 +1,7 @@
 dnl  This file is part of openGalaxy.
 dnl
 dnl  opengalaxy - a SIA receiver for Galaxy security control panels.
-dnl  Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+dnl  Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
 dnl
 dnl  This program is free software: you can redistribute it and/or modify
 dnl  it under the terms of the GNU General Public License version 2 as
@@ -28,7 +28,7 @@ dnl  You should have received a copy of the GNU General Public License
 dnl  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 dnl
 AC_PREREQ([2.69])
-AC_INIT([opengalaxy], [0.14], [alexander.bruines@gmail.com], [], [http://sourceforge.net/projects/galaxy4linux/])
+AC_INIT([opengalaxy], [0.15], [alexander.bruines@gmail.com], [], [http://sourceforge.net/projects/galaxy4linux/])
 AC_CANONICAL_TARGET
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign subdir-objects dist-xz no-dist-gzip])
@@ -98,11 +98,11 @@ dnl Enable SSL (default is yes)
 #  [enable_ssl="yes"]
 #)
 enable_ssl="yes"
-dnl With static OpenSSL? (default is shared)
-AC_ARG_WITH([system-openssl], [AS_HELP_STRING([--with-system-openssl], [Use system provided OpenSSL? (default=no)])],
-  [enable_system_openssl="yes"],
-  [enable_system_openssl="no"]
-)
+dnl With system OpenSSL? (default is to clone from github)
+#AC_ARG_WITH([system-openssl], [AS_HELP_STRING([--with-system-openssl], [Use system provided OpenSSL? (default=no)])],
+#  [enable_system_openssl="yes"],
+#  [enable_system_openssl="no"]
+#)
 
 dnl Build all applications or just the server (default is all)
 AC_ARG_ENABLE([extras], [AS_HELP_STRING([--disable-extras], [Disable building anything apart from the opengalaxy server application.])],
@@ -221,8 +221,14 @@ AS_IF([test "x${target_cpu}" = "xx86_64"], [have_x86_cpu="yes"]);
 AS_IF([test "x${target_cpu}" = "xx86_64"], [have_amd64_cpu="yes"]);
 AS_IF([test "x${target_cpu}" = "xi386"], [have_x86_cpu="yes"]);
 AS_IF([test "x${target_cpu}" = "xi386"], [have_i386_cpu="yes"]);
+AS_IF([test "x${target_cpu}" = "xi486"], [have_x86_cpu="yes"]);
+AS_IF([test "x${target_cpu}" = "xi486"], [have_i386_cpu="yes"]);
+AS_IF([test "x${target_cpu}" = "xi586"], [have_x86_cpu="yes"]);
+AS_IF([test "x${target_cpu}" = "xi586"], [have_i386_cpu="yes"]);
+AS_IF([test "x${target_cpu}" = "xi686"], [have_x86_cpu="yes"]);
+AS_IF([test "x${target_cpu}" = "xi686"], [have_i386_cpu="yes"]);
 AS_IF([test "x$have_x86_cpu" = "xyes"],[
- AC_DEFINE([HAVE_X86_CPU], 1, [Are we configuring for i386 or x86_64])
+ AC_DEFINE([HAVE_X86_CPU], 1, [Are we configuring for x86 or x86_64])
 ])
 AS_IF([test "x$have_amd64_cpu" = "xyes"],[
  AC_DEFINE([HAVE_AMD64_CPU], 1, [Are we configuring for 64bit])
@@ -270,6 +276,10 @@ hardening_ldflags="-Wl,-z,relro,-z,now"
 hardening_cxxflags="$hardening_cxxflags -fPIE"
 hardening_cflags="$hardening_cflags -fPIE"
 hardening_ldflags="$hardening_ldflags -fPIE -pie"
+
+#hardening_cxxflags="$hardening_cxxflags -fPIC"
+#hardening_cflags="$hardening_cflags -fPIC"
+#hardening_ldflags="$hardening_ldflags -fPIC"
 ])
 
 dnl Set things up for normal, debug, maintainer or private mode
@@ -418,27 +428,26 @@ dnl
 AX_PTHREAD([], AC_MSG_ERROR([No POSIX threads available!]))
 
 dnl Test for zlib
-dnl
+dnl - 0.15: use builtin zlib (on Linux)
+AS_IF([test "x$have_windows" = "xyes" ], [
 BACKUP_CPPFLAGS=$CPPFLAGS
 BACKUP_LDFLAGS=$LDFLAGS
 BACKUP_LIBS=$LIBS
 CPPFLAGS=""
 LDFLAGS=""
 LIBS=""
-AX_CHECK_ZLIB([], AC_MSG_ERROR([No ZLIB development files found!]))
+AX_CHECK_ZLIB([], AC_MSG_WARN([No ZLIB development files found!]))
 ZLIB_CFLAGS=$CPPFLAGS
 ZLIB_LDFLAGS=$LDFLAGS
 ZLIB_LIBS=$LIBS
 CPPFLAGS=$BACKUP_CPPFLAGS
 LDFLAGS=$BACKUP_LDFLAGS
 LIBS=$BACKUP_LIBS
-
-dnl for libwebsockets build
-ZLIB_INCLUDE_DIR=$(echo $ZLIB_CFLAGS | awk '{print $1}' | sed s/-I//)
-ZLIB_LIBRARY=$(echo $ZLIB_LDFLAGS | awk '{print $1}' | sed s/-L//)
-AC_SUBST(ZLIB_INCLUDE_DIR)
-AC_SUBST(ZLIB_LIBRARY)
-
+], [
+ZLIB_CFLAGS=
+ZLIB_LDFLAGS="-Llib/usr/lib"
+ZLIB_LIBS="${LINK_STATIC} -lz ${LINK_DYNAMIC}"
+])
 
 dnl Test for SSL library
 dnl
@@ -554,8 +563,9 @@ AS_IF([test "x$enable_mysql_plugin" = "xyes"], [
   AS_IF([test "$mysql_version_check" != "1"], [
    AC_MSG_NOTICE([])
    AC_MSG_NOTICE([This project requires libmysqlclient to be installed])
-   AC_MSG_NOTICE([Run 'apt-get install libmysqlclient-dev' or download the sources])
-   AC_MSG_NOTICE([from http://dev.mysql.com/downloads/connector/c/])
+   AC_MSG_NOTICE([On debian jessie run 'apt-get install libmysqlclient-dev'])
+   AC_MSG_NOTICE([On debian stretch run 'apt-get install default-libmysqlclient-dev'])
+   AC_MSG_NOTICE([Or download the sources from http://dev.mysql.com/downloads/connector/c/])
    AC_MSG_NOTICE([])
    AC_MSG_NOTICE([Please install libmysqlclient (version ${need_libmysqlclient_version} or higher) or use --with-mysql=/full/path/to/mysql_config])
    AC_MSG_NOTICE([You may also disable the MySQL output plugin with --without-mysql-plugin to remove this dependancy.])
@@ -572,7 +582,11 @@ AS_IF([test "x$enable_mysql_plugin" = "xyes"], [
 dnl Test for GTK+ 3.0
 dnl
 AS_IF([test "x$enable_extras" = "xyes"], [
- PKG_CHECK_MODULES([GTK], [gtk+-3.0], [],[AC_MSG_ERROR("GTK+ 3.x development files are needed to build openGalaxy")])
+ PKG_CHECK_MODULES([GTK], [gtk+-3.0], [],[
+  AC_MSG_NOTICE("GTK+ 3.x development files are needed to build openGalaxy")
+  AC_MSG_NOTICE([On debian run 'apt-get install libgtk-3-dev'])
+  AC_MSG_ERROR([])
+ ])
  dnl ensure that only allowed headers are included
  GTK_CFLAGS+=" -DGTK_DISABLE_SINGLE_INCLUDES"
  dnl ensure that no gtk deprecated symbols are used
@@ -581,6 +595,16 @@ AS_IF([test "x$enable_extras" = "xyes"], [
  dnl ensure use of accessors
  GTK_CFLAGS+=" -DGSEAL_ENABLE"
 ])
+
+
+dnl Check for git
+AC_CHECK_PROG([HAVE_GIT], [git], ["yes"], ["no"], [], [])
+AS_IF([test x"$HAVE_GIT" != x"yes"], [AC_MSG_ERROR([Please install git before configuring.])])
+
+
+dnl Check for git
+AC_CHECK_PROG([HAVE_CMAKE], [cmake], ["yes"], ["no"], [], [])
+AS_IF([test x"$HAVE_CMAKE" != x"yes"], [AC_MSG_ERROR([Please install cmake before configuring.])])
 
 
 dnl Windows: Test for NSIS
@@ -621,14 +645,15 @@ AS_IF([test "x$have_windows" = "xyes"], [
 ])
 
 
-dnl Windows: Test for 'upx' executeable file compressor
-dnl
-AS_IF([test "x$have_windows" = "xyes"], [
- AC_CHECK_PROG([have_upx], [upx], ["yes"], ["no"], [], [])
- AS_IF([test "x$have_upx" = "xno"], [
-  AC_MSG_WARN(['Ultimate Packer for eXecutables' (UPX) not found, not compressing executables...])
- ])
-])
+# upx is dangerous, it may mess up the executable...
+#dnl Windows: Test for 'upx' executeable file compressor
+#dnl
+#AS_IF([test "x$have_windows" = "xyes"], [
+# AC_CHECK_PROG([have_upx], [upx], ["yes"], ["no"], [], [])
+# AS_IF([test "x$have_upx" = "xno"], [
+#  AC_MSG_WARN(['Ultimate Packer for eXecutables' (UPX) not found, not compressing executables...])
+# ])
+#])
 
 
 dnl Windows: We also need mkdir -p during the installation phase in Makefile.am
@@ -784,12 +809,11 @@ AS_IF([test "x$have_windows" != "xyes"], [
  src_server_opengalaxy_LDFLAGS="${src_server_opengalaxy_LDFLAGS} ${LDFLAGS}"
 ])
 
-dnl not needed anymore, we link staticly against non-system libraries (wolfssf, websockets, libmysql)
-dnl Add rpath's to per-target_LDFLAGS
-##AS_IF([test "x$have_windows" != "xyes"], [
-## RPATH=`echo "$src_server_opengalaxy_LDFLAGS" | ${SED} "s/-L/-Wl,-rpath,/g"`
-## src_server_opengalaxy_LDFLAGS="${src_server_opengalaxy_LDFLAGS} ${RPATH}"
-##])
+# make sure we link to our static zlib
+# (ldd still says we depend on zlib shared library, probably loaded for another shared library)
+AS_IF([test "x$have_windows" = "xyes" ], [], [
+ src_server_opengalaxy_LDADD=`echo ${src_server_opengalaxy_LDADD} | ${SED} "s/-lz/${LINK_STATIC} -lz ${LINK_DYNAMIC}/g"`
+])
 
 dnl Tidy up for displaying purposes
 src_server_opengalaxy_CXXFLAGS=`echo "$src_server_opengalaxy_CXXFLAGS" | $SED 's/  */ /g;s/^ //;s/ $//'`
@@ -882,14 +906,6 @@ AS_IF([test "x$enable_extras" = "xyes"], [
   dnl This way we keep a console window from popping up when we use popen()
   src_ca_opengalaxy_ca_LDFLAGS="${src_ca_opengalaxy_ca_LDFLAGS} ${LDFLAGS}"
  ])
-
-
- dnl not needed anymore, we link staticly against non-system libraries (wolfssf, websockets, libmysql)
- dnl Add rpath's to per-target_LDFLAGS
-# AS_IF([test "x$have_windows" != "xyes"], [
-#  RPATH=`echo "$src_ca_opengalaxy_ca_LDFLAGS" | ${SED} "s/-L/-Wl,-rpath,/g"`
-#  src_ca_opengalaxy_ca_LDFLAGS="${src_ca_opengalaxy_ca_LDFLAGS} ${RPATH}"
-# ])
 
  dnl Tidy up for displaying purposes
  src_ca_opengalaxy_ca_CFLAGS=`echo "$src_ca_opengalaxy_ca_CFLAGS" | $SED 's/  */ /g;s/^ //;s/ $//'`
@@ -996,13 +1012,6 @@ AS_IF([test "x$enable_extras" = "xyes"], [
   dnl Add system library paths last
   src_client_opengalaxy_client_LDFLAGS="${src_client_opengalaxy_client_LDFLAGS} ${LDFLAGS}"
  ])
-
- dnl not needed anymore, we link staticly against non-system libraries (libwebsockets, libmysql)
- dnl Add rpath's to per-target_LDFLAGS
-## AS_IF([test "x$have_windows" != "xyes"], [
-##  RPATH=`echo "$src_client_opengalaxy_client_LDFLAGS" | ${SED} "s/-L/-Wl,-rpath,/g"`
-##  src_client_opengalaxy_client_LDFLAGS="${src_client_opengalaxy_client_LDFLAGS} ${RPATH}"
-## ])
 
  dnl Tidy up for displaying purposes
  src_client_opengalaxy_client_CFLAGS=`echo "$src_client_opengalaxy_client_CFLAGS" | $SED 's/  */ /g;s/^ //;s/ $//'`
@@ -1113,9 +1122,9 @@ AS_IF([test "x$have_windows" = "xyes"], [
  AC_CONFIG_FILES([installer.nsi])
 ], [
  AC_CONFIG_FILES([src/config/ssmtp.conf])
- AC_CONFIG_FILES([src/ca/opengalaxy-ca.desktop])
- AC_CONFIG_FILES([src/server/opengalaxy-server.desktop])
- AC_CONFIG_FILES([src/client/opengalaxy-client.desktop])
+ AC_CONFIG_FILES([src/xdg/opengalaxy-ca.desktop])
+ AC_CONFIG_FILES([src/xdg/opengalaxy-server.desktop])
+ AC_CONFIG_FILES([src/xdg/opengalaxy-client.desktop])
 ])
 AC_CONFIG_FILES([src/config/galaxy.conf])
 AC_CONFIG_FILES([Makefile])

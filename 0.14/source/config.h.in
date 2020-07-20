@@ -149,7 +149,7 @@
 /* On Windows, using MSYS2 64bit */
 #undef HAVE_WINDOWS
 
-/* Are we configuring for i386 or x86_64 */
+/* Are we configuring for x86 or x86_64 */
 #undef HAVE_X86_CPU
 
 /* Define to 1 if the system has the type `_Bool'. */

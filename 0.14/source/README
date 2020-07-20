@@ -1,5 +1,5 @@
 opengalaxy - a SIA receiver for Galaxy security control panels.
-Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License version 2 as
@@ -41,6 +41,25 @@ INDEX:
 
 (Consult the changelog file for changes between versions of openGalaxy.)
 
+
+IMPORTANT NOTICE:
+=================
+
+This is the final release of openGalaxy in its current form. It was written
+as a testbed for me to figure out how to take controle of my Galaxy security
+panel. Now that I have done that I realize that there are many design flaws
+in the way openGalaxy handles things. The C/C++ code of openGalaxy has also
+basicly been 'hacked' together just to get it working...
+
+I have started to write a new project from scratch (but am not sure if I want
+to opensource that code).
+
+This release just updates the build scripts so that everything compiles with
+the current versions of Debian GNU/Linux and MSYS2 (for Windows).
+
+(The Windows compilation scripts will very likely break again in the
+future because MSYS will eventually use a newer library versions then the
+build scripts are able to handle.)
 
 
 About openGalaxy:
@@ -142,33 +161,9 @@ the panel (Please correct me if I am wrong!!).
 NEW IN THIS VERSION:
 ====================
 
-0.14:
+0.15:
 
-A lot of bugfixes and much better handling of username/password.
-Due to this improvement, automaticly logging off after a specified amount
-of time now works reliably and is turned on by default in SSL mode.
-
-The server application now detects if there are SSL certificates installed
-and automaticly starts in plain HTTP mode if they cannot be found.
-
-The certificate manager application is now able to upload the required SSL
-certificates to any running openGalaxy server. After uploading the server
-will restart in full SSL mode. After initial installation this can also be
-used to update the server when a client certificate has been revoked or to
-renew the server certificate.
-
-The configuration file has several new variables that can be modified.
-
-In the next version of openGalaxy I would like to implement some means of
-assigning privileges to individual users to only allow access to certain
-areas, zones, outputs, uploading of certificates ...
-It would be nice if I can manage to use OCSP instead of a basic CRL cert.
-
-Also the client program will finally get some much needed attention,
-it seems to have some grahical glitches in the windows version right now (but
-it will likely be completely re-written anyway). It would be nice if I can
-figure out how to use the .crt and .pfx files with the client application
-instead of using the .pem files...
+Added 'areaNumber' member to JSON_AREA_ARMED_STATE reply message.
 
 
 Installing openGalaxy:
@@ -176,23 +171,22 @@ Installing openGalaxy:
 
 For Windows: Use the installer executable.
 
-For Debian and Ubuntu:
+For Debian, Raspbian and Ubuntu:
 
-  Build or download all .deb packages and run:
-    sudo apt-get install libmysqlclient18 menu menu-xdg openssl libssl
+  Open a console and navigate to the directory where the .deb files
+  are located and execute:
+
     sudo dpkg -i *.deb
 
-For Raspbian:
+  That command will likely print error messages about missing packages.
+  To resolve the missing packages run the command:
 
-  Build or download all .deb packages and run:
-    sudo apt-get install libmysqlclient18 menu menu-xdg openssl libssl1.0.0
-    sudo dpkg -i *.deb
+    sudo apt-get -f install
 
+  The openGalaxy applications can now be started from the menu, you can
+  find them in the 'Network' or 'Internet' section.
 
-  The openGalaxy applications are now available in your menu as:
-    Debian -> Applications -> System -> Security -> openGalaxy*
-
-  Or they may be executed from the commandline as:
+  Alternatively they may be executed from the commandline as:
     opengalaxy
     opengalaxy-client
     opengalaxy-ca
@@ -217,6 +211,8 @@ man galaxy.conf
 man opengalaxy
 man opengalaxy-ca
 man opengalaxy-client
+
+/usr/share/doc/galaxy/openGalaxy_Certificate_Manager.pdf
 
 On Windows a number of PDF document are installed in the programs
 directory:

@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -62,7 +62,10 @@ int Websocket::ssl_load_certs(SSL_CTX *ctx, struct lws_context *context)
       ERR_error_string( n, errbuf )
     );
     ctxpss->websocket->opengalaxy().syslog().error(
-      "Did you remember to setup the SSL certificates with opengalaxy-ca?"
+      "- Did you remember to setup the SSL certificates with opengalaxy-ca ?"
+    );
+    ctxpss->websocket->opengalaxy().syslog().error(
+      "- Is the current user a member of group 'staff'?"
     );
     ctxpss->websocket->opengalaxy().syslog().error(
       "(To disable SSL start opengalaxy with the --disable-ssl option)"
@@ -89,7 +92,10 @@ int Websocket::ssl_load_certs(SSL_CTX *ctx, struct lws_context *context)
       ERR_error_string(n, errbuf)
     );
     ctxpss->websocket->opengalaxy().syslog().error(
-      "Did you remember to setup the SSL certificates with opengalaxy-ca?"
+      "- Did you remember to setup the SSL certificates with opengalaxy-ca ?"
+    );
+    ctxpss->websocket->opengalaxy().syslog().error(
+      "- Is the current user a member of group 'staff'?"
     );
     ctxpss->websocket->opengalaxy().syslog().error(
       "(To disable SSL start opengalaxy with the --disable-ssl option)"

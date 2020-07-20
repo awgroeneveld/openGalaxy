@@ -1,5 +1,6 @@
 usr/bin/opengalaxy
 usr/share/man/man8/opengalaxy.8
 usr/share/man/man5/galaxy.conf.5
-var/log/galaxy
+usr/share/galaxy/opengalaxy-server.desktop
+usr/share/polkit-1/actions/org.freedesktop.policykit.opengalaxy.policy
 

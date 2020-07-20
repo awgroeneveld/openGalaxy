@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -35,6 +35,12 @@
 #include <mutex>
 #include <signal.h>
 
+#ifdef __linux__
+// for pid_t
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 namespace openGalaxy {
 
 class Signals {
@@ -51,6 +57,7 @@ private:
   static void dummycb( void*, int signum );    // Dummy callback set when the default ctor is used
 
 #ifdef __linux__
+  static pid_t ppid;                           // PID of the parent process
   static volatile bool m_quit;                 // set to true to exit m_thread
   static std::thread* m_thread;                // the thread for this Signals
   static volatile bool m_handled;              // false while a pending signal has not been handled yet

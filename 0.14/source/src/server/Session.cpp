@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -257,13 +257,17 @@ Session *Session::get(
   }
   return s;
 }
-// - by wsi
+// - by the wsi stored in the session
 Session *Session::get(
   struct lws* wsi,
   struct lws_context* context
 ){
   Websocket::ContextUserData *ctxpss =
     (Websocket::ContextUserData *) lws_context_user(context);
+
+  ctxpss->websocket->opengalaxy().syslog().error(
+    "Session: Warning using fallback method to obtain session!"
+  );
 
   Session *s = nullptr;
   for(int i=0; i < ctxpss->sessions.size(); i++){
@@ -273,6 +277,52 @@ Session *Session::get(
     }
   }
   return s;
+}
+// - by peer certificate
+Session *Session::get(struct lws *wsi)
+{
+  // Get lws context
+  struct lws_context *context = lws_get_context(wsi);
+  if(!context) return nullptr;
+
+  // Get lws context userdata
+  Websocket::ContextUserData *ctxpss = (Websocket::ContextUserData *) lws_context_user(context);
+  if(!ctxpss) return nullptr;
+
+  X509 *x509 = nullptr;
+  std::string sha256finger;
+  if(
+    (ctxpss->websocket->opengalaxy().m_options.no_ssl == 0) &&
+    (ctxpss->websocket->opengalaxy().m_options.no_client_certs == 0)
+  ){
+    // Obtain pointer to SSL from lws and get the peer certificate
+    SSL *ssl = lws_get_ssl(wsi);
+
+    x509 = (ssl) ? SSL_get_peer_certificate(ssl) : nullptr;
+    if(!x509){
+      ctxpss->websocket->opengalaxy().syslog().error(
+        "Session: Unable to get the client SSL certificate from the SSL library."
+      );
+      return nullptr;
+    }
+
+    // calculate the SHA-256 fingerprint for this client (certificate)
+    char *ftmp = ssl_calculate_sha256_fingerprint(x509);
+    if(!ftmp){
+      ctxpss->websocket->opengalaxy().syslog().error(
+        "Session: "
+        "Unable to calculate SHA-256 fingerprint for client SSL certificate."
+      );
+      return nullptr;
+    }
+    sha256finger.assign(ftmp);
+    ssl_free(ftmp);
+
+    return Session::get(sha256finger.c_str(), context);
+  }
+  else {
+    return Session::get(wsi, context);
+  }
 }
 
 

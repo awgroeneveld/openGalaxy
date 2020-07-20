@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -37,6 +37,7 @@
 #include "atomic.h"
 #ifndef HAVE_NO_SSL
 
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -997,7 +998,8 @@ int rsa_aes_verify_and_decrypt(
 // Encodes a BIGNUM as a hexadecimal C-string
 void ssl_hex_encode(unsigned char* readbuf, void *writebuf, size_t len)
 {
-  for(size_t i=0; i < len; i++) {
+  size_t i;
+  for(i=0; i < len; i++) {
     char *l = (char*) (2*i + ((intptr_t) writebuf));
     sprintf(l, "%02x", readbuf[i]);
   }
@@ -1008,7 +1010,7 @@ void ssl_hex_encode(unsigned char* readbuf, void *writebuf, size_t len)
 char* ssl_calculate_sha256_fingerprint(X509 *x509)
 {
   unsigned char sha256[SSL_SHA256LEN];
-	char sha256str[2*SSL_SHA256LEN+1];
+  char sha256str[2*SSL_SHA256LEN+1];
   const EVP_MD *digest = EVP_sha256();
   unsigned int len;
   int rc = X509_digest(x509, digest, sha256, &len);

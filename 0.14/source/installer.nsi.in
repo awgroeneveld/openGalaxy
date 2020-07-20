@@ -1,5 +1,5 @@
 ; opengalaxy - a SIA receiver for Galaxy security control panels.
-; Copyright (C) 2015, Alexander Bruines <alexander.bruines@gmail.com>
+; Copyright (C) 2015 - 2019, Alexander Bruines <alexander.bruines@gmail.com>
 ;
 ; This program is free software: you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License version 2 as
@@ -173,14 +173,23 @@ SectionEnd
 
 Section "GTK+" SectionGtkRuntime
   SetOutPath "$BINDIR"
-  file /nonfatal /r /x "libmysql.dll" "*.dll"
+  file /nonfatal /x "libmysql.dll" "*.dll"
   SetOutPath "$INSTDIR"
+  file /r "lib"
 SectionEnd
 
 
 Section "Adwaita" SectionGtkAdwaita
   SetOutPath "$INSTDIR"
   file /r "share"
+  SetOutPath "$INSTDIR"
+SectionEnd
+
+
+Section "MS C++ 2015 runtime" SectVsRuntime
+  SetOutPath "$INSTDIR"
+  file /r "vc_redist.exe"
+  ExecWait '"$INSTDIR\vc_redist.exe"'
   SetOutPath "$INSTDIR"
 SectionEnd
 
@@ -262,6 +271,7 @@ LangString DESC_SectionOpenGalaxyCA ${LANG_ENGLISH} "Select this option to insta
 LangString DESC_SectionDesktop ${LANG_ENGLISH} "Select this option to place a shortcut on the desktop."
 LangString DESC_SectionGtkRuntime ${LANG_ENGLISH} "GTK+ runtime libraries."
 LangString DESC_SectionGtkAdwaita ${LANG_ENGLISH} "Adwaita theme for GTK+."
+LangString DESC_SectVsRuntime ${LANG_ENGLISH} "Microsoft Visual C++ 2015 runtime."
 LangString DESC_SectionAlwaysInstalled ${LANG_ENGLISH} "Uninstall scripts."
 
 ;Assign language strings to sections
@@ -272,6 +282,7 @@ LangString DESC_SectionAlwaysInstalled ${LANG_ENGLISH} "Uninstall scripts."
   !insertmacro MUI_DESCRIPTION_TEXT ${SectionDesktop} $(DESC_SectionDesktop)
   !insertmacro MUI_DESCRIPTION_TEXT ${SectionGtkRuntime} $(DESC_SectionGtkRuntime)
   !insertmacro MUI_DESCRIPTION_TEXT ${SectionGtkAdwaita} $(DESC_SectionGtkAdwaita)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SectVsRuntime} $(DESC_SectVsRuntime)
   !insertmacro MUI_DESCRIPTION_TEXT ${SectionAlwaysInstalled} $(DESC_SectionAlwaysInstalled)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -330,15 +341,17 @@ Section "Uninstall"
   delete $INSTDIR\www\*
   ;
   ; Delete the the openGalaxyCA\share directory
-  delete $INSTDIR\share\icons\Adwaita\16x16\actions\*.png
-  delete $INSTDIR\share\icons\Adwaita\16x16\apps\*.png
-  delete $INSTDIR\share\icons\Adwaita\16x16\categories\*.png
-  delete $INSTDIR\share\icons\Adwaita\16x16\devices\*.png
-  delete $INSTDIR\share\icons\Adwaita\16x16\emblems\*.png
-  delete $INSTDIR\share\icons\Adwaita\16x16\emotes\*.png
-  delete $INSTDIR\share\icons\Adwaita\16x16\mimetypes\*.png
-  delete $INSTDIR\share\icons\Adwaita\16x16\places\*.png
-  delete $INSTDIR\share\icons\Adwaita\16x16\status\*.png
+  delete $INSTDIR\share\icons\Adwaita\16x16\actions\*
+  delete $INSTDIR\share\icons\Adwaita\16x16\apps\*
+  delete $INSTDIR\share\icons\Adwaita\16x16\categories\*
+  delete $INSTDIR\share\icons\Adwaita\16x16\devices\*
+  delete $INSTDIR\share\icons\Adwaita\16x16\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\16x16\emotes\*
+  delete $INSTDIR\share\icons\Adwaita\16x16\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\16x16\places\*
+  delete $INSTDIR\share\icons\Adwaita\16x16\status\*
+  delete $INSTDIR\share\icons\Adwaita\16x16\legacy\*
+  delete $INSTDIR\share\icons\Adwaita\16x16\ui\*
   rmDir $INSTDIR\share\icons\Adwaita\16x16\actions
   rmDir $INSTDIR\share\icons\Adwaita\16x16\apps
   rmDir $INSTDIR\share\icons\Adwaita\16x16\categories
@@ -348,16 +361,19 @@ Section "Uninstall"
   rmDir $INSTDIR\share\icons\Adwaita\16x16\mimetypes
   rmDir $INSTDIR\share\icons\Adwaita\16x16\places
   rmDir $INSTDIR\share\icons\Adwaita\16x16\status
+  rmDir $INSTDIR\share\icons\Adwaita\16x16\legacy
+  rmDir $INSTDIR\share\icons\Adwaita\16x16\ui
   rmDir $INSTDIR\share\icons\Adwaita\16x16
-  delete $INSTDIR\share\icons\Adwaita\22x22\actions\*.png
-  delete $INSTDIR\share\icons\Adwaita\22x22\apps\*.png
-  delete $INSTDIR\share\icons\Adwaita\22x22\categories\*.png
-  delete $INSTDIR\share\icons\Adwaita\22x22\devices\*.png
-  delete $INSTDIR\share\icons\Adwaita\22x22\emblems\*.png
-  delete $INSTDIR\share\icons\Adwaita\22x22\emotes\*.png
-  delete $INSTDIR\share\icons\Adwaita\22x22\mimetypes\*.png
-  delete $INSTDIR\share\icons\Adwaita\22x22\places\*.png
-  delete $INSTDIR\share\icons\Adwaita\22x22\status\*.png
+  delete $INSTDIR\share\icons\Adwaita\22x22\actions\*
+  delete $INSTDIR\share\icons\Adwaita\22x22\apps\*
+  delete $INSTDIR\share\icons\Adwaita\22x22\categories\*
+  delete $INSTDIR\share\icons\Adwaita\22x22\devices\*
+  delete $INSTDIR\share\icons\Adwaita\22x22\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\22x22\emotes\*
+  delete $INSTDIR\share\icons\Adwaita\22x22\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\22x22\places\*
+  delete $INSTDIR\share\icons\Adwaita\22x22\status\*
+  delete $INSTDIR\share\icons\Adwaita\22x22\legacy\*
   rmDir $INSTDIR\share\icons\Adwaita\22x22\actions
   rmDir $INSTDIR\share\icons\Adwaita\22x22\apps
   rmDir $INSTDIR\share\icons\Adwaita\22x22\categories
@@ -367,16 +383,19 @@ Section "Uninstall"
   rmDir $INSTDIR\share\icons\Adwaita\22x22\mimetypes
   rmDir $INSTDIR\share\icons\Adwaita\22x22\places
   rmDir $INSTDIR\share\icons\Adwaita\22x22\status
+  rmDir $INSTDIR\share\icons\Adwaita\22x22\legacy
   rmDir $INSTDIR\share\icons\Adwaita\22x22
-  delete $INSTDIR\share\icons\Adwaita\24x24\actions\*.png
-  delete $INSTDIR\share\icons\Adwaita\24x24\apps\*.png
-  delete $INSTDIR\share\icons\Adwaita\24x24\categories\*.png
-  delete $INSTDIR\share\icons\Adwaita\24x24\devices\*.png
-  delete $INSTDIR\share\icons\Adwaita\24x24\emblems\*.png
-  delete $INSTDIR\share\icons\Adwaita\24x24\emotes\*.png
-  delete $INSTDIR\share\icons\Adwaita\24x24\mimetypes\*.png
-  delete $INSTDIR\share\icons\Adwaita\24x24\places\*.png
-  delete $INSTDIR\share\icons\Adwaita\24x24\status\*.png
+  delete $INSTDIR\share\icons\Adwaita\24x24\actions\*
+  delete $INSTDIR\share\icons\Adwaita\24x24\apps\*
+  delete $INSTDIR\share\icons\Adwaita\24x24\categories\*
+  delete $INSTDIR\share\icons\Adwaita\24x24\devices\*
+  delete $INSTDIR\share\icons\Adwaita\24x24\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\24x24\emotes\*
+  delete $INSTDIR\share\icons\Adwaita\24x24\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\24x24\places\*
+  delete $INSTDIR\share\icons\Adwaita\24x24\status\*
+  delete $INSTDIR\share\icons\Adwaita\24x24\legacy\*
+  delete $INSTDIR\share\icons\Adwaita\24x24\ui\*
   rmDir $INSTDIR\share\icons\Adwaita\24x24\actions
   rmDir $INSTDIR\share\icons\Adwaita\24x24\apps
   rmDir $INSTDIR\share\icons\Adwaita\24x24\categories
@@ -386,16 +405,19 @@ Section "Uninstall"
   rmDir $INSTDIR\share\icons\Adwaita\24x24\mimetypes
   rmDir $INSTDIR\share\icons\Adwaita\24x24\places
   rmDir $INSTDIR\share\icons\Adwaita\24x24\status
+  rmDir $INSTDIR\share\icons\Adwaita\24x24\legacy
+  rmDir $INSTDIR\share\icons\Adwaita\24x24\ui
   rmDir $INSTDIR\share\icons\Adwaita\24x24
-  delete $INSTDIR\share\icons\Adwaita\256x256\actions\*.png
-  delete $INSTDIR\share\icons\Adwaita\256x256\apps\*.png
-  delete $INSTDIR\share\icons\Adwaita\256x256\categories\*.png
-  delete $INSTDIR\share\icons\Adwaita\256x256\devices\*.png
-  delete $INSTDIR\share\icons\Adwaita\256x256\emblems\*.png
-  delete $INSTDIR\share\icons\Adwaita\256x256\emotes\*.png
-  delete $INSTDIR\share\icons\Adwaita\256x256\mimetypes\*.png
-  delete $INSTDIR\share\icons\Adwaita\256x256\places\*.png
-  delete $INSTDIR\share\icons\Adwaita\256x256\status\*.png
+  delete $INSTDIR\share\icons\Adwaita\256x256\actions\*
+  delete $INSTDIR\share\icons\Adwaita\256x256\apps\*
+  delete $INSTDIR\share\icons\Adwaita\256x256\categories\*
+  delete $INSTDIR\share\icons\Adwaita\256x256\devices\*
+  delete $INSTDIR\share\icons\Adwaita\256x256\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\256x256\emotes\*
+  delete $INSTDIR\share\icons\Adwaita\256x256\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\256x256\places\*
+  delete $INSTDIR\share\icons\Adwaita\256x256\status\*
+  delete $INSTDIR\share\icons\Adwaita\256x256\legacy\*
   rmDir $INSTDIR\share\icons\Adwaita\256x256\actions
   rmDir $INSTDIR\share\icons\Adwaita\256x256\apps
   rmDir $INSTDIR\share\icons\Adwaita\256x256\categories
@@ -405,16 +427,18 @@ Section "Uninstall"
   rmDir $INSTDIR\share\icons\Adwaita\256x256\mimetypes
   rmDir $INSTDIR\share\icons\Adwaita\256x256\places
   rmDir $INSTDIR\share\icons\Adwaita\256x256\status
+  rmDir $INSTDIR\share\icons\Adwaita\256x256\legacy
   rmDir $INSTDIR\share\icons\Adwaita\256x256
-  delete $INSTDIR\share\icons\Adwaita\96x96\actions\*.png
-  delete $INSTDIR\share\icons\Adwaita\96x96\apps\*.png
-  delete $INSTDIR\share\icons\Adwaita\96x96\categories\*.png
-  delete $INSTDIR\share\icons\Adwaita\96x96\devices\*.png
-  delete $INSTDIR\share\icons\Adwaita\96x96\emblems\*.png
-  delete $INSTDIR\share\icons\Adwaita\96x96\emotes\*.png
-  delete $INSTDIR\share\icons\Adwaita\96x96\mimetypes\*.png
-  delete $INSTDIR\share\icons\Adwaita\96x96\places\*.png
-  delete $INSTDIR\share\icons\Adwaita\96x96\status\*.png
+  delete $INSTDIR\share\icons\Adwaita\96x96\actions\*
+  delete $INSTDIR\share\icons\Adwaita\96x96\apps\*
+  delete $INSTDIR\share\icons\Adwaita\96x96\categories\*
+  delete $INSTDIR\share\icons\Adwaita\96x96\devices\*
+  delete $INSTDIR\share\icons\Adwaita\96x96\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\96x96\emotes\*
+  delete $INSTDIR\share\icons\Adwaita\96x96\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\96x96\places\*
+  delete $INSTDIR\share\icons\Adwaita\96x96\status\*
+  delete $INSTDIR\share\icons\Adwaita\96x96\ui\*
   rmDir $INSTDIR\share\icons\Adwaita\96x96\actions
   rmDir $INSTDIR\share\icons\Adwaita\96x96\apps
   rmDir $INSTDIR\share\icons\Adwaita\96x96\categories
@@ -424,16 +448,18 @@ Section "Uninstall"
   rmDir $INSTDIR\share\icons\Adwaita\96x96\mimetypes
   rmDir $INSTDIR\share\icons\Adwaita\96x96\places
   rmDir $INSTDIR\share\icons\Adwaita\96x96\status
+  rmDir $INSTDIR\share\icons\Adwaita\96x96\ui
   rmDir $INSTDIR\share\icons\Adwaita\96x96
-  delete $INSTDIR\share\icons\Adwaita\64x64\actions\*.png
-  delete $INSTDIR\share\icons\Adwaita\64x64\apps\*.png
-  delete $INSTDIR\share\icons\Adwaita\64x64\categories\*.png
-  delete $INSTDIR\share\icons\Adwaita\64x64\devices\*.png
-  delete $INSTDIR\share\icons\Adwaita\64x64\emblems\*.png
-  delete $INSTDIR\share\icons\Adwaita\64x64\emotes\*.png
-  delete $INSTDIR\share\icons\Adwaita\64x64\mimetypes\*.png
-  delete $INSTDIR\share\icons\Adwaita\64x64\places\*.png
-  delete $INSTDIR\share\icons\Adwaita\64x64\status\*.png
+  delete $INSTDIR\share\icons\Adwaita\64x64\actions\*
+  delete $INSTDIR\share\icons\Adwaita\64x64\apps\*
+  delete $INSTDIR\share\icons\Adwaita\64x64\categories\*
+  delete $INSTDIR\share\icons\Adwaita\64x64\devices\*
+  delete $INSTDIR\share\icons\Adwaita\64x64\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\64x64\emotes\*
+  delete $INSTDIR\share\icons\Adwaita\64x64\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\64x64\places\*
+  delete $INSTDIR\share\icons\Adwaita\64x64\status\*
+  delete $INSTDIR\share\icons\Adwaita\64x64\ui\*
   rmDir $INSTDIR\share\icons\Adwaita\64x64\actions
   rmDir $INSTDIR\share\icons\Adwaita\64x64\apps
   rmDir $INSTDIR\share\icons\Adwaita\64x64\categories
@@ -443,16 +469,19 @@ Section "Uninstall"
   rmDir $INSTDIR\share\icons\Adwaita\64x64\mimetypes
   rmDir $INSTDIR\share\icons\Adwaita\64x64\places
   rmDir $INSTDIR\share\icons\Adwaita\64x64\status
+  rmDir $INSTDIR\share\icons\Adwaita\64x64\ui
   rmDir $INSTDIR\share\icons\Adwaita\64x64
-  delete $INSTDIR\share\icons\Adwaita\32x32\actions\*.png
-  delete $INSTDIR\share\icons\Adwaita\32x32\apps\*.png
-  delete $INSTDIR\share\icons\Adwaita\32x32\categories\*.png
-  delete $INSTDIR\share\icons\Adwaita\32x32\devices\*.png
-  delete $INSTDIR\share\icons\Adwaita\32x32\emblems\*.png
-  delete $INSTDIR\share\icons\Adwaita\32x32\emotes\*.png
-  delete $INSTDIR\share\icons\Adwaita\32x32\mimetypes\*.png
-  delete $INSTDIR\share\icons\Adwaita\32x32\places\*.png
-  delete $INSTDIR\share\icons\Adwaita\32x32\status\*.png
+  delete $INSTDIR\share\icons\Adwaita\32x32\actions\*
+  delete $INSTDIR\share\icons\Adwaita\32x32\apps\*
+  delete $INSTDIR\share\icons\Adwaita\32x32\categories\*
+  delete $INSTDIR\share\icons\Adwaita\32x32\devices\*
+  delete $INSTDIR\share\icons\Adwaita\32x32\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\32x32\emotes\*
+  delete $INSTDIR\share\icons\Adwaita\32x32\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\32x32\places\*
+  delete $INSTDIR\share\icons\Adwaita\32x32\status\*
+  delete $INSTDIR\share\icons\Adwaita\32x32\legacy\*
+  delete $INSTDIR\share\icons\Adwaita\32x32\ui\*
   rmDir $INSTDIR\share\icons\Adwaita\32x32\actions
   rmDir $INSTDIR\share\icons\Adwaita\32x32\apps
   rmDir $INSTDIR\share\icons\Adwaita\32x32\categories
@@ -462,16 +491,20 @@ Section "Uninstall"
   rmDir $INSTDIR\share\icons\Adwaita\32x32\mimetypes
   rmDir $INSTDIR\share\icons\Adwaita\32x32\places
   rmDir $INSTDIR\share\icons\Adwaita\32x32\status
+  rmDir $INSTDIR\share\icons\Adwaita\32x32\legacy
+  rmDir $INSTDIR\share\icons\Adwaita\32x32\ui
   rmDir $INSTDIR\share\icons\Adwaita\32x32
-  delete $INSTDIR\share\icons\Adwaita\48x48\actions\*.png
-  delete $INSTDIR\share\icons\Adwaita\48x48\apps\*.png
-  delete $INSTDIR\share\icons\Adwaita\48x48\categories\*.png
-  delete $INSTDIR\share\icons\Adwaita\48x48\devices\*.png
-  delete $INSTDIR\share\icons\Adwaita\48x48\emblems\*.png
-  delete $INSTDIR\share\icons\Adwaita\48x48\emotes\*.png
-  delete $INSTDIR\share\icons\Adwaita\48x48\mimetypes\*.png
-  delete $INSTDIR\share\icons\Adwaita\48x48\places\*.png
-  delete $INSTDIR\share\icons\Adwaita\48x48\status\*.png
+  delete $INSTDIR\share\icons\Adwaita\48x48\actions\*
+  delete $INSTDIR\share\icons\Adwaita\48x48\apps\*
+  delete $INSTDIR\share\icons\Adwaita\48x48\categories\*
+  delete $INSTDIR\share\icons\Adwaita\48x48\devices\*
+  delete $INSTDIR\share\icons\Adwaita\48x48\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\48x48\emotes\*
+  delete $INSTDIR\share\icons\Adwaita\48x48\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\48x48\places\*
+  delete $INSTDIR\share\icons\Adwaita\48x48\status\*
+  delete $INSTDIR\share\icons\Adwaita\48x48\legacy\*
+  delete $INSTDIR\share\icons\Adwaita\48x48\ui\*
   rmDir $INSTDIR\share\icons\Adwaita\48x48\actions
   rmDir $INSTDIR\share\icons\Adwaita\48x48\apps
   rmDir $INSTDIR\share\icons\Adwaita\48x48\categories
@@ -481,16 +514,19 @@ Section "Uninstall"
   rmDir $INSTDIR\share\icons\Adwaita\48x48\mimetypes
   rmDir $INSTDIR\share\icons\Adwaita\48x48\places
   rmDir $INSTDIR\share\icons\Adwaita\48x48\status
+  rmDir $INSTDIR\share\icons\Adwaita\48x48\legacy
+  rmDir $INSTDIR\share\icons\Adwaita\48x48\ui
   rmDir $INSTDIR\share\icons\Adwaita\48x48
-  delete $INSTDIR\share\icons\Adwaita\8x8\actions\*.png
-  delete $INSTDIR\share\icons\Adwaita\8x8\apps\*.png
-  delete $INSTDIR\share\icons\Adwaita\8x8\categories\*.png
-  delete $INSTDIR\share\icons\Adwaita\8x8\devices\*.png
-  delete $INSTDIR\share\icons\Adwaita\8x8\emblems\*.png
-  delete $INSTDIR\share\icons\Adwaita\8x8\emotes\*.png
-  delete $INSTDIR\share\icons\Adwaita\8x8\mimetypes\*.png
-  delete $INSTDIR\share\icons\Adwaita\8x8\places\*.png
-  delete $INSTDIR\share\icons\Adwaita\8x8\status\*.png
+  delete $INSTDIR\share\icons\Adwaita\8x8\actions\*
+  delete $INSTDIR\share\icons\Adwaita\8x8\apps\*
+  delete $INSTDIR\share\icons\Adwaita\8x8\categories\*
+  delete $INSTDIR\share\icons\Adwaita\8x8\devices\*
+  delete $INSTDIR\share\icons\Adwaita\8x8\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\8x8\emotes\*
+  delete $INSTDIR\share\icons\Adwaita\8x8\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\8x8\places\*
+  delete $INSTDIR\share\icons\Adwaita\8x8\status\*
+  delete $INSTDIR\share\icons\Adwaita\8x8\legacy\*
   rmDir $INSTDIR\share\icons\Adwaita\8x8\actions
   rmDir $INSTDIR\share\icons\Adwaita\8x8\apps
   rmDir $INSTDIR\share\icons\Adwaita\8x8\categories
@@ -500,18 +536,20 @@ Section "Uninstall"
   rmDir $INSTDIR\share\icons\Adwaita\8x8\mimetypes
   rmDir $INSTDIR\share\icons\Adwaita\8x8\places
   rmDir $INSTDIR\share\icons\Adwaita\8x8\status
+  rmDir $INSTDIR\share\icons\Adwaita\8x8\legacy
   rmDir $INSTDIR\share\icons\Adwaita\8x8
   delete $INSTDIR\share\icons\Adwaita\cursors\*
   rmDir $INSTDIR\share\icons\Adwaita\cursors
-  delete $INSTDIR\share\icons\Adwaita\scalable\actions\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable\apps\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable\categories\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable\devices\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable\emblems\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable\emotes\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable\mimetypes\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable\places\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable\status\*.svg
+  delete $INSTDIR\share\icons\Adwaita\scalable\actions\*
+  delete $INSTDIR\share\icons\Adwaita\scalable\apps\*
+  delete $INSTDIR\share\icons\Adwaita\scalable\categories\*
+  delete $INSTDIR\share\icons\Adwaita\scalable\devices\*
+  delete $INSTDIR\share\icons\Adwaita\scalable\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\scalable\emotes\*
+  delete $INSTDIR\share\icons\Adwaita\scalable\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\scalable\places\*
+  delete $INSTDIR\share\icons\Adwaita\scalable\status\*
+  delete $INSTDIR\share\icons\Adwaita\scalable\ui\*
   rmDir $INSTDIR\share\icons\Adwaita\scalable\actions
   rmDir $INSTDIR\share\icons\Adwaita\scalable\apps
   rmDir $INSTDIR\share\icons\Adwaita\scalable\categories
@@ -521,16 +559,17 @@ Section "Uninstall"
   rmDir $INSTDIR\share\icons\Adwaita\scalable\mimetypes
   rmDir $INSTDIR\share\icons\Adwaita\scalable\places
   rmDir $INSTDIR\share\icons\Adwaita\scalable\status
+  rmDir $INSTDIR\share\icons\Adwaita\scalable\ui
   rmDir $INSTDIR\share\icons\Adwaita\scalable
-  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\actions\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\apps\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\categories\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\devices\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\emblems\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\emotes\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\mimetypes\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\places\*.svg
-  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\status\*.svg
+  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\actions\*
+  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\apps\*
+  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\categories\*
+  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\devices\*
+  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\emotes\*
+  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\places\*
+  delete $INSTDIR\share\icons\Adwaita\scalable-up-to-32\status\*
   rmDir $INSTDIR\share\icons\Adwaita\scalable-up-to-32\actions
   rmDir $INSTDIR\share\icons\Adwaita\scalable-up-to-32\apps
   rmDir $INSTDIR\share\icons\Adwaita\scalable-up-to-32\categories
@@ -541,13 +580,34 @@ Section "Uninstall"
   rmDir $INSTDIR\share\icons\Adwaita\scalable-up-to-32\places
   rmDir $INSTDIR\share\icons\Adwaita\scalable-up-to-32\status
   rmDir $INSTDIR\share\icons\Adwaita\scalable-up-to-32
+  delete $INSTDIR\share\icons\Adwaita\512x512\devices\*
+  delete $INSTDIR\share\icons\Adwaita\512x512\emblems\*
+  delete $INSTDIR\share\icons\Adwaita\512x512\mimetypes\*
+  delete $INSTDIR\share\icons\Adwaita\512x512\places\*
+  delete $INSTDIR\share\icons\Adwaita\512x512\status\*
+  delete $INSTDIR\share\icons\Adwaita\512x512\legacy\*
+  rmDir $INSTDIR\share\icons\Adwaita\512x512\devices
+  rmDir $INSTDIR\share\icons\Adwaita\512x512\emblems
+  rmDir $INSTDIR\share\icons\Adwaita\512x512\mimetypes
+  rmDir $INSTDIR\share\icons\Adwaita\512x512\places
+  rmDir $INSTDIR\share\icons\Adwaita\512x512\status
+  rmDir $INSTDIR\share\icons\Adwaita\512x512\legacy
+  rmDir $INSTDIR\share\icons\Adwaita\512x512
   delete $INSTDIR\share\icons\Adwaita\icon-theme.cache
   delete $INSTDIR\share\icons\Adwaita\index.theme
   rmDir $INSTDIR\share\icons\Adwaita
   rmDir $INSTDIR\share\icons
   rmDir $INSTDIR\share
   ;
-  ; Try to remove the install directory tree - this will only happen if each directory it is empty
+  ; remove pixbuf loaders.
+  delete $INSTDIR\lib\gdk-pixbuf-2.0\2.10.0\loaders\*
+  delete $INSTDIR\lib\gdk-pixbuf-2.0\2.10.0\loaders.cache
+  rmDir $INSTDIR\lib\gdk-pixbuf-2.0\2.10.0\loaders
+  rmDir $INSTDIR\lib\gdk-pixbuf-2.0\2.10.0
+  rmDir $INSTDIR\lib\gdk-pixbuf-2.0
+  rmDir $INSTDIR\lib
+  ;
+  ; remove the www directory tree - this will only happen if each directory it is empty
   rmDir $INSTDIR\www\external\jquery-ui\images
   rmDir $INSTDIR\www\external\jquery-ui
   rmDir $INSTDIR\www\external\jquery
@@ -616,13 +676,17 @@ done:
   ; also set the variable that holds the location of the GtkApplications directory
   StrCpy $BINDIR "$INSTDIR\bin"
 
-  ; gray-out the Gtk runtime and Adwaita sections
+  ; gray-out the Gtk runtime, Adwaita and VS 2015 runtime sections
   SectionGetFlags ${SectionGtkRuntime} $0
   SectionGetFlags ${SectionGtkAdwaita} $1
+  SectionGetFlags ${SectVsRuntime} $2
   IntOp $0 $0 | ${SF_RO}
   IntOp $1 $1 | ${SF_RO}
+  IntOp $2 $2 | ${SF_RO}
+  IntOp $2 $2 | ${SF_SELECTED}
   SectionSetFlags ${SectionGtkRuntime} $0
   SectionSetFlags ${SectionGtkAdwaita} $1
+  SectionSetFlags ${SectVsRuntime} $2
 functionEnd
 
 
@@ -663,6 +727,11 @@ function un.onInit
   SetShellVarContext current
   !insertmacro VerifyUserIsAdmin
   StrCpy $BINDIR "$INSTDIR\bin"
+functionEnd
+
+
+function .onGUIEnd
+  delete $INSTDIR\vc_redist.exe
 functionEnd
 
 

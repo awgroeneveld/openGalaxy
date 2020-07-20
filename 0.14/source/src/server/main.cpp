@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -101,6 +101,15 @@ void SignalsCallback(void *userdata, int signum)
 
     case SIGUSR2: // Not used
       opengalaxy->syslog().debug( "Caught signal: %s","SIGUSR2" );
+      break;
+
+    case SIGCHLD: // Parent process has gone away
+      opengalaxy->syslog().debug( "Caught signal: %s","SIGCHLD" );
+      if (opengalaxy->m_options.monitor_ppid) {
+        // signal the openGalaxy object to exit.
+        isHup = false;
+        opengalaxy->exit();
+      }
       break;
 #endif
 

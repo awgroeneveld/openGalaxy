@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -61,13 +61,14 @@ static int is_regular_file( const char *fn )
 
   int retv = 1;
   FILE *fp = fopen( fn, "r" );
-  fseek( fp, 0L, SEEK_END );
-  if( ftell(fp) == 0 ){
-    // file is empty
-    retv = 0;
+  if (fp) {
+    fseek( fp, 0L, SEEK_END );
+    if( ftell(fp) == 0 ){
+      // file is empty
+      retv = 0;
+    }
+    fclose( fp );
   }
-  fclose( fp );
-
   return retv;
 }
 
@@ -383,13 +384,24 @@ void Websocket::Thread(Websocket *_this)
     else {
       // Yes, register OID and load keys
       Credentials::register_OID_with_openssl();
-      if(
-        !ssl_evp_rsa_load_public_key(_this->fn_verify_key.c_str(), &_this->verify_key) ||
-        !ssl_evp_rsa_load_private_key(_this->fn_credentials_key.c_str(), &_this->credentials_key, NULL, NULL)
-      ){
-        _this->opengalaxy().syslog().error("ERROR: RSA verify/decrypt keys could NOT be read! (Please generate certificates with the certificate manager...)");
-        _this->opengalaxy().exit();
-        return;
+      if(_this->opengalaxy().m_options.no_ssl == 0){
+        if(
+          !ssl_evp_rsa_load_public_key(_this->fn_verify_key.c_str(), &_this->verify_key) ||
+          !ssl_evp_rsa_load_private_key(_this->fn_credentials_key.c_str(), &_this->credentials_key, NULL, NULL)
+        ){
+          _this->opengalaxy().syslog().error("ERROR: RSA verify/decrypt keys could NOT be read!");
+          _this->opengalaxy().syslog().error(
+            "- Did you remember to setup the SSL certificates with opengalaxy-ca ?"
+          );
+          _this->opengalaxy().syslog().error(
+            "- Is the current user a member of group 'staff'?"
+          );
+          _this->opengalaxy().syslog().error(
+            "(To disable SSL start opengalaxy with the --disable-ssl option)"
+          );
+          _this->opengalaxy().exit();
+          return;
+        }
       }
     }
 
@@ -442,7 +454,19 @@ void Websocket::Thread(Websocket *_this)
         ){
           // No they do not exist, start in non SSL mode
           _this->opengalaxy().syslog().error(
-            "WARNING: Could not find all SSL certificates, starting in HTTP mode."
+            "WARNING: Could not find the server SSL certificates!"
+          );
+          _this->opengalaxy().syslog().error(
+            "- Did you remember to setup the SSL certificates with opengalaxy-ca ?"
+          );
+          _this->opengalaxy().syslog().error(
+            "- Is the current user a member of group 'staff'?"
+          );
+          _this->opengalaxy().syslog().error(
+            "(To disable SSL start opengalaxy with the --disable-ssl option)"
+          );
+          _this->opengalaxy().syslog().error(
+            "WARNING: Starting in HTTP mode..."
           );
           _this->opengalaxy().m_options.no_ssl = 1;
           _this->opengalaxy().m_options.no_client_certs = 1;
@@ -639,7 +663,9 @@ void Websocket::write(
     sizeof(struct CommandReplyMessage)
   );
 
-  memcpy(&(l->session), session, sizeof(session_id));
+//  memcpy(&(l->session), session, sizeof(session_id));
+l->session = *session; // use copy-assignment instead
+
   l->reply = (char*)thread_safe_malloc(utf8.size()+1);
   strcpy(l->reply, utf8.data());
 
@@ -793,7 +819,7 @@ int Websocket::opengalaxy_protocol_callback(
       }
       else {
         ctxpss->websocket->opengalaxy().syslog().error("Websocket: Warning, no per session data in LWS_CALLBACK_ESTABLISHED");
-        s = Session::get(wsi, context);
+        s = Session::get(wsi);
       }
       if(!s){
         // No session available, block the connection
@@ -833,7 +859,7 @@ int Websocket::opengalaxy_protocol_callback(
       }
       else {
         ctxpss->websocket->opengalaxy().syslog().error("Websocket: Warning, no per session data in LWS_CALLBACK_CLOSED");
-        s = Session::get(wsi, context);
+        s = Session::get(wsi);
       }
       if(s){
         // Log out of the session when the websocket is closed
@@ -959,7 +985,7 @@ int Websocket::opengalaxy_protocol_callback(
         }
         else {
           ctxpss->websocket->opengalaxy().syslog().error("Websocket: Warning, no per session data in LWS_CALLBACK_RECEIVE");
-          s = Session::get(wsi, context);
+          s = Session::get(wsi);
         }
         if(!s){
           std::string noname = "no username available";

@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -175,7 +175,7 @@ const char Commander::json_command_error_fmt[]   = "{\"typeId\":%u,\"typeDesc\":
 const char Commander::json_command_help_fmt[]    = "{\"typeId\":%u,\"typeDesc\":\"%s\",\"success\":%u,\"command\":\"%s\",\"helpText\":\"%s\"}";
 const char Commander::json_command_list_fmt[]    = "{\"typeId\":%u,\"typeDesc\":\"%s\",\"success\":%u,\"command\":\"%s\",\"helpText\":\"";
 const char Commander::json_all_area_fmt[]        = "{\"typeId\":%u,\"typeDesc\":\"%s\",\"areaState\":[%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u]}";
-const char Commander::json_single_area_fmt[]     = "{\"typeId\":%u,\"typeDesc\":\"%s\",\"areaState\":%u}";
+const char Commander::json_single_area_fmt[]     = "{\"typeId\":%u,\"typeDesc\":\"%s\",\"areaNumber\":%u,\"areaState\":%u}";
 const char Commander::json_zone_omit_state_fmt[] = "{\"typeId\":%u,\"typeDesc\":\"%s\",\"zoneNumber\":%u,\"omitState\":%u}";
 const char Commander::json_zone_state_fmt[]      = "{\"typeId\":%u,\"typeDesc\":\"%s\",\"zoneNumber\":%u,\"zoneState\":%u}";
 const char Commander::json_all_zone_state_fmt[]  = "{\"typeId\":%u,\"typeDesc\":\"%s\",\"zoneState\":[%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u]}";
@@ -489,6 +489,7 @@ bool Commander::ExecCmd(PendingCommand& cmd)
                 json_single_area_fmt,
                 static_cast<unsigned int>(json_reply_id::area_armed_state),
                 CommanderTypeDesc[static_cast<int>(json_reply_id::area_armed_state)],
+                t,
                 static_cast<unsigned int>(state.armed[0])
               );
             }
@@ -541,6 +542,7 @@ bool Commander::ExecCmd(PendingCommand& cmd)
                 json_single_area_fmt,
                 static_cast<unsigned int>(json_reply_id::area_alarm_state),
                 CommanderTypeDesc[static_cast<int>(json_reply_id::area_alarm_state)],
+                t,
                 static_cast<unsigned int>(state.alarm[t-1])
               );
             }
@@ -593,6 +595,7 @@ bool Commander::ExecCmd(PendingCommand& cmd)
                 json_single_area_fmt,
                 static_cast<unsigned int>(json_reply_id::area_ready_state),
                 CommanderTypeDesc[static_cast<int>(json_reply_id::area_ready_state)],
+                t,
                 static_cast<unsigned int>(state.ready[t-1])
               );
             }

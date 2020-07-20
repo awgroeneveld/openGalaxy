@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -129,6 +129,12 @@ private:
   // Timepoint representing the last client activity on all protocols.
   std::chrono::high_resolution_clock::time_point last_activity_tp;
 
+  // Retrieve a session from the global list off sessions:
+  // - by SSL certificate SHA-256 fingerprint
+  static Session *get(const char *sha256str, struct lws_context* context);
+  // - by wsi (fallback method)
+  static Session *get(struct lws *wsi, struct lws_context* context);
+
 public:
   // The number of seconds after which a session expires if left unused,
   // ie. a connection attempt was made but never established.
@@ -190,16 +196,12 @@ public:
   // add a session to the global list off sessions
   static int add(Session *s, struct lws_context* context);
 
-  // get a session from the global list off sessions
+  // Retrieve a session from the global list off sessions,
+  // in order of usage preference:
+  // - by the session_id stored in session
   static Session *get(session_id& session, struct lws_context* context);
-
-  // - by SHA-256 fingerprint
-  // (to be used from Session::start() and LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION only)
-  static Session *get(const char *sha256str, struct lws_context* context);
-
-  // get a session from the global list off sessions
-  // - by wsi (struct lws*)
-  static Session *get(struct lws *wsi, struct lws_context* context);
+  // - by peer certificate
+  static Session *get(struct lws *wsi);
 
   // delete a session from the global list off sessions
   static void remove(session_id& session, struct lws_context* context);

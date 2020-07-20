@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -43,8 +43,12 @@
 #include <iostream>
 
 #ifdef __linux__
+
+#include <sys/types.h>
+
 static_assert(std::is_same<std::thread::native_handle_type, pthread_t>::value,
   "libstdc++ thread implementation does not use the POSIX threads library (pthread_t) !");
+
 #endif
 
 namespace openGalaxy {
@@ -61,6 +65,7 @@ void Signals::dummycb( void*, int signum )
 
 #ifdef __linux__
 
+pid_t Signals::ppid;                                  // Parent process PID
 volatile bool Signals::m_quit;                        // set to true to exit m_thread
 volatile bool Signals::m_handled;                     // false while a pending signal has not been handled yet
 sigset_t Signals::m_signals;                          // our set of signals
@@ -75,6 +80,8 @@ void Signals::dummy( int signum )
 // This thread processes all relevant signals.
 void Signals::Thread( Signals* _this )
 {
+  int test_ppid = 1;
+
   if( signal( SIGINT,  dummy ) == SIG_IGN ){ signal( SIGINT,  SIG_IGN ); }
   if( signal( SIGABRT, dummy ) == SIG_IGN ){ signal( SIGABRT, SIG_IGN ); }
   if( signal( SIGTERM, dummy ) == SIG_IGN ){ signal( SIGTERM, SIG_IGN ); }
@@ -88,6 +95,15 @@ void Signals::Thread( Signals* _this )
   while( _this->m_quit == false ){
     sigset_t pending;
     int signum = 0;
+
+    // Test if the child PID is still running and send a SIGCHLD to the
+    // user defined handler function (once) if it has exited.
+    if (test_ppid) {
+      if(kill(ppid, 0) < 0 && errno == ESRCH && _this->m_callback != nullptr){
+        test_ppid = 0;
+        _this->m_callback( _this->m_userdata, SIGCHLD );
+      }
+    }
 
     // Check for pending signals
     if( sigpending( &pending ) == 0 ){
@@ -133,9 +149,11 @@ void Signals::set_callback(void(*callback)(void*,int), void *userdata)
 
 void Signals::setup()
 {
-  sigemptyset( &m_signals );
+  // Get the PID of the calling (parent) process
+  ppid = getppid();
 
- // Add the desired signal to the set
+  // Add the desired signal to the set
+  sigemptyset( &m_signals );
   if( sigaddset( &m_signals, SIGABRT ) != 0 ||
       sigaddset( &m_signals, SIGHUP ) != 0 ||
       sigaddset( &m_signals, SIGINT ) != 0 ||

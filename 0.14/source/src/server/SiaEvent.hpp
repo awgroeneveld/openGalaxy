@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -166,9 +166,13 @@ public:
   int subSubscriber;
   bool haveSubSubscriber;
 
-  std::string addressType;
+  std::string addressType; // == the address_field of the SiaEventCode
   int addressNumber;
 
+  // Although present in the SIA specification 'units' seem to be unused by
+  // current Galaxy panels. Therefor these members of the class are only here
+  // for reference, these values are currently not written to any output plugin
+  // or to the websocket.
   std::string unitsType;
   int units;
   bool haveUnits;

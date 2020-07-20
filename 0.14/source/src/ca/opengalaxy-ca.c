@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -28,90 +28,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// TODO verander de manier voor het invoeren van de naam van de client
-// (gebruik 1 regel voor de hele voornaam/voornamen + tussenvoegsels etc + achternaam/achternamen)
-// 512 byte limiet is toch wel acceptabel???
-
-// TODO voeg privileges toe aan de credentials
-//
-// (Basic client information)
-// name     : base64 encoded real name (string)
-// surname  : base64 encoded real surname (string)
-// login    : base64 encoded login name (string)
-// password : base64 encoded login password (string)
-//
-// (Areas this client may (dis)arm)
-// arm      : 32bit decimal value (each bit representing an area)
-// disarm   : 32bit decimal value (each bit representing an area)
-// partset  : 32bit decimal value (each bit representing an area)
-//
-// (Zones this client may omit / set parameter / program)
-// omit     : Array of 64 bytes (512 bits each representing a zone)
-// param    : Array of 64 bytes (512 bits each representing a zone)
-// program  : Array of 64 bytes (512 bits each representing a zone)
-//
-// (Outputs this client may (re)set)
-// outputs  : Array of 32 bytes (256 bits each representing an output)
-//
-// In function cert_write_FN_CLIENTCNF() the entire formatted string is written
-// to a temporary file that is then encrypted 
-//
-// After reading back the encrypted data from the temporary file this data is
-// again base64 encoded before being added to the certificate under
-// SubjectAlternativeName->otherName with OID_OTHERNAME as the object identifier
-//
-// Possibly zip the encrypted data ???
-//
-/*
-static const char *fmt_client_json =
-  "{"
-  "\"name\":\"%s\","
-  "\"surname\":\"%s\","
-  "\"login\":\"%s\","
-  "\"password\":\"%s\","
-  "\"arm\":%u,"
-  "\"disarm\":%u,"
-  "\"partset\":%u,"
-  "\"omit\":[%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u],"
-  "\"param\":[%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u],"
-  "\"program\":[%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u],"
-  "\"outputs\":[%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u]"
-  "}";
-
-  sprintf(
-    json,
-    fmt_client_json,
-    b64name,
-    b64surname,
-    b64login,
-    b64password,
-    // Privileges
-    0xFFFFFFFF, // arm areas
-    0xFFFFFFFF, // disarm areas
-    0xFFFFFFFF, // partset areas
-    // omit zones
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 1
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 2
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 3
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 4
-    // set zone parameters
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 1
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 2
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 3
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 4
-    // change zones programming
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 1
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 2
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 3
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, // RIOs line 4
-    // (re)set outputs
-    01,23,45,67,89,1011,1213,1415, // RIOs lines 1 & 2
-    01,23,45,67,89,1011,1213,1415  // RIOs lines 3 & 4
-  );
-
-*/
-
-
 #include "atomic.h"
 
 /*
@@ -122,11 +38,12 @@ static const char *fmt_client_json =
  *
  * For normal operation GENPKEY_ALGORITHM_RSA should be selected...
  */
+// the pkey types
 #define GENPKEY_ALGORITHM_RSA 1
 #define GENPKEY_ALGORITHM_DSA 2
 #define GENPKEY_ALGORITHM_EC 3
 #define GENPKEY_ALGORITHM_DH 4
-
+// the selected type
 #define CA_GENPKEY_ALGORITHM GENPKEY_ALGORITHM_RSA
 #define SERVER_GENPKEY_ALGORITHM GENPKEY_ALGORITHM_RSA
 #define CLIENT_GENPKEY_ALGORITHM GENPKEY_ALGORITHM_RSA

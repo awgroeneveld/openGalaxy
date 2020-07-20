@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -43,6 +43,7 @@ public:
   int no_ssl;           // Set to 1 to disable SSL.
   int no_password;      // Set to 1 to disable the use of a username/password (when using client certificates).
   int auto_logoff;      // Set to 1 to enable automatic logoff after a timeout.
+  int monitor_ppid;     // Set to 1 to exit the application when the parent process died.
 
   // default ctor
   context_options(){
@@ -50,6 +51,7 @@ public:
     auto_logoff = 1;
     no_client_certs = 0;
     no_ssl = 0;
+    monitor_ppid = 0;
   }
 
   // copy ctor
@@ -58,6 +60,7 @@ public:
     auto_logoff = s.auto_logoff;
     no_client_certs = s.no_client_certs;
     no_ssl = s.no_ssl;
+    monitor_ppid = s.monitor_ppid;
   }
 
   // = operator
@@ -66,6 +69,7 @@ public:
     auto_logoff = s.auto_logoff;
     no_client_certs = s.no_client_certs;
     no_ssl = s.no_ssl;
+    monitor_ppid = s.monitor_ppid;
     return *this;
   }
   context_options& operator=(context_options* s){

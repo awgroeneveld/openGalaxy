@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -676,6 +676,9 @@ bool SIA::DecodePacket(std::string& packet)
         /// AAAA   = (an) Address Number (optional, ASCII representation of base 16 value, at least 1 character and a maximum of 4)
         /// UUUUUU = (un) Units Number (optional, presence indicated by *, ASCII representation of base 10 value, at least 1 character and a maximum of 6)
         /// uu     = (ut) Unit Type (optional, Units Number must be present, 1 or 2 characters)
+        ///
+        /// Note: Galaxy panels seem to send a base10 value that is never followed by a unit type.
+        ///
         if(len > 0 && *p != SIA::packet_separator){
           if(len > 0){ an[0] = *p++; len--; }
           if(len > 0 && *p != SIA::packet_separator && *p != '*'){ an[1] = *p++; len--; }
@@ -1146,7 +1149,7 @@ opengalaxy().syslog().debug("SIA: left shifting data 1 place");
 void SIA::fillSiaEventCodeArray(void)
 {
   static std::string SIA_AR      = "AR";
-  static std::string SIA_AR_NAME = "AR restoral";
+  static std::string SIA_AR_NAME = "AC restoral";
   static std::string SIA_AR_DESC = "AC power has been restored";
 
   static std::string SIA_AT      = "AT"; 
@@ -1695,7 +1698,7 @@ void SIA::fillSiaEventCodeArray(void)
 
   static std::string SIA_RC      = "RC";
   static std::string SIA_RC_NAME = "Relay close";
-  static std::string SIA_RC_DESC = "The relay specified in the address field (optional) has energised";
+  static std::string SIA_RC_DESC = "The relay specified in the address field (optional) has energized";
 
   static std::string SIA_RD      = "RD";
   static std::string SIA_RD_NAME = "Remote program denied";
@@ -1707,7 +1710,7 @@ void SIA::fillSiaEventCodeArray(void)
 
   static std::string SIA_RO      = "RO";
   static std::string SIA_RO_NAME = "Relay open";
-  static std::string SIA_RO_DESC = "The relay specified in the address field (optional) has de-energised";
+  static std::string SIA_RO_DESC = "The relay specified in the address field (optional) has de-energized";
 
   static std::string SIA_RP      = "RP";
   static std::string SIA_RP_NAME = "Automatic test";
@@ -2031,7 +2034,7 @@ void SIA::fillSiaEventCodeArray(void)
 
   static SiaEventCode SiaEventCode_0( SIA_AR, SIA_AR_NAME, SIA_AR_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_1( SIA_AT, SIA_AT_NAME, SIA_AT_DESC, SiaEventCode::AddressField::unused);
-      
+
   static SiaEventCode SiaEventCode_2( SIA_BA, SIA_BA_NAME, SIA_BA_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_3( SIA_BB, SIA_BB_NAME, SIA_BB_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_4( SIA_BC, SIA_BC_NAME, SIA_BC_DESC, SiaEventCode::AddressField::user);
@@ -2043,7 +2046,7 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_10( SIA_BU, SIA_BU_NAME, SIA_BU_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_11( SIA_BV, SIA_BV_NAME, SIA_BV_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_12( SIA_BX, SIA_BX_NAME, SIA_BX_DESC, SiaEventCode::AddressField::zone);
-      
+
   static SiaEventCode SiaEventCode_13( SIA_CA, SIA_CA_NAME, SIA_CA_DESC, SiaEventCode::AddressField::area);
   static SiaEventCode SiaEventCode_14( SIA_CE, SIA_CE_NAME, SIA_CE_DESC, SiaEventCode::AddressField::user);
   static SiaEventCode SiaEventCode_15( SIA_CF, SIA_CF_NAME, SIA_CF_DESC, SiaEventCode::AddressField::user);
@@ -2126,7 +2129,7 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_85( SIA_KS, SIA_KS_NAME, SIA_KS_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_86( SIA_KT, SIA_KT_NAME, SIA_KT_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_87( SIA_KU, SIA_KU_NAME, SIA_KU_DESC, SiaEventCode::AddressField::zone);
-      
+
   static SiaEventCode SiaEventCode_88( SIA_LB, SIA_LB_NAME, SIA_LB_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_89( SIA_LD, SIA_LD_NAME, SIA_LD_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_90( SIA_LE, SIA_LE_NAME, SIA_LE_DESC, SiaEventCode::AddressField::unused);
@@ -2145,7 +2148,7 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_102( SIA_MS, SIA_MS_NAME, SIA_MS_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_103( SIA_MT, SIA_MT_NAME, SIA_MT_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_104( SIA_MU, SIA_MU_NAME, SIA_MU_DESC, SiaEventCode::AddressField::zone);
-      
+
   static SiaEventCode SiaEventCode_105( SIA_NA, SIA_NA_NAME, SIA_NA_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_106( SIA_NF, SIA_NF_NAME, SIA_NF_DESC, SiaEventCode::AddressField::area);
   static SiaEventCode SiaEventCode_107( SIA_NL, SIA_NL_NAME, SIA_NL_DESC, SiaEventCode::AddressField::area);
@@ -2170,7 +2173,7 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_124( SIA_PS, SIA_PS_NAME, SIA_PS_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_125( SIA_PT, SIA_PT_NAME, SIA_PT_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_126( SIA_PU, SIA_PU_NAME, SIA_PU_DESC, SiaEventCode::AddressField::zone);
-      
+
   static SiaEventCode SiaEventCode_127( SIA_QA, SIA_QA_NAME, SIA_QA_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_128( SIA_QB, SIA_QB_NAME, SIA_QB_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_129( SIA_QH, SIA_QH_NAME, SIA_QH_DESC, SiaEventCode::AddressField::zone);
@@ -2179,7 +2182,7 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_132( SIA_QS, SIA_QS_NAME, SIA_QS_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_133( SIA_QT, SIA_QT_NAME, SIA_QT_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_134( SIA_QU, SIA_QU_NAME, SIA_QU_DESC, SiaEventCode::AddressField::zone);
-      
+
   static SiaEventCode SiaEventCode_135( SIA_RA, SIA_RA_NAME, SIA_RA_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_136( SIA_RB, SIA_RB_NAME, SIA_RB_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_137( SIA_RC, SIA_RC_NAME, SIA_RC_DESC, SiaEventCode::AddressField::relay);
@@ -2192,7 +2195,7 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_144( SIA_RT, SIA_RT_NAME, SIA_RT_DESC, SiaEventCode::AddressField::line);
   static SiaEventCode SiaEventCode_145( SIA_RU, SIA_RU_NAME, SIA_RU_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_146( SIA_RX, SIA_RX_NAME, SIA_RX_DESC, SiaEventCode::AddressField::user);
-      
+
   static SiaEventCode SiaEventCode_147( SIA_SA, SIA_SA_NAME, SIA_SA_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_148( SIA_SB, SIA_SB_NAME, SIA_SB_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_149( SIA_SH, SIA_SH_NAME, SIA_SH_DESC, SiaEventCode::AddressField::zone);
@@ -2201,7 +2204,7 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_152( SIA_SS, SIA_SS_NAME, SIA_SS_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_153( SIA_ST, SIA_ST_NAME, SIA_ST_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_154( SIA_SU, SIA_SU_NAME, SIA_SU_DESC, SiaEventCode::AddressField::zone);
-      
+
   static SiaEventCode SiaEventCode_155( SIA_TA, SIA_TA_NAME, SIA_TA_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_156( SIA_TB, SIA_TB_NAME, SIA_TB_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_157( SIA_TE, SIA_TE_NAME, SIA_TE_DESC, SiaEventCode::AddressField::unused);
@@ -2209,7 +2212,7 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_159( SIA_TS, SIA_TS_NAME, SIA_TS_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_160( SIA_TU, SIA_TU_NAME, SIA_TU_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_161( SIA_TX, SIA_TX_NAME, SIA_TX_DESC, SiaEventCode::AddressField::zone);
-      
+
   static SiaEventCode SiaEventCode_162( SIA_UA, SIA_UA_NAME, SIA_UA_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_163( SIA_UB, SIA_UB_NAME, SIA_UB_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_164( SIA_UH, SIA_UH_NAME, SIA_UH_DESC, SiaEventCode::AddressField::zone);
@@ -2221,7 +2224,7 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_170( SIA_UX, SIA_UX_NAME, SIA_UX_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_171( SIA_UY, SIA_UY_NAME, SIA_UY_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_172( SIA_UZ, SIA_UZ_NAME, SIA_UZ_DESC, SiaEventCode::AddressField::zone);
-      
+
   static SiaEventCode SiaEventCode_173( SIA_VI, SIA_VI_NAME, SIA_VI_DESC, SiaEventCode::AddressField::printer);
   static SiaEventCode SiaEventCode_174( SIA_VO, SIA_VO_NAME, SIA_VO_DESC, SiaEventCode::AddressField::printer);
   static SiaEventCode SiaEventCode_175( SIA_VR, SIA_VR_NAME, SIA_VR_DESC, SiaEventCode::AddressField::printer);
@@ -2229,7 +2232,7 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_177( SIA_VX, SIA_VX_NAME, SIA_VX_DESC, SiaEventCode::AddressField::printer);
   static SiaEventCode SiaEventCode_178( SIA_VY, SIA_VY_NAME, SIA_VY_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_179( SIA_VZ, SIA_VZ_NAME, SIA_VZ_DESC, SiaEventCode::AddressField::unused);
-      
+
   static SiaEventCode SiaEventCode_180( SIA_WA, SIA_WA_NAME, SIA_WA_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_181( SIA_WB, SIA_WB_NAME, SIA_WB_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_182( SIA_WH, SIA_WH_NAME, SIA_WH_DESC, SiaEventCode::AddressField::zone);
@@ -2238,14 +2241,14 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_185( SIA_WS, SIA_WS_NAME, SIA_WS_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_186( SIA_WT, SIA_WT_NAME, SIA_WT_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_187( SIA_WU, SIA_WU_NAME, SIA_WU_DESC, SiaEventCode::AddressField::zone);
-      
+
   static SiaEventCode SiaEventCode_188( SIA_XE, SIA_XE_NAME, SIA_XE_DESC, SiaEventCode::AddressField::point);
   static SiaEventCode SiaEventCode_189( SIA_XF, SIA_XF_NAME, SIA_XF_DESC, SiaEventCode::AddressField::point);
   static SiaEventCode SiaEventCode_190( SIA_XI, SIA_XI_NAME, SIA_XI_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_191( SIA_XR, SIA_XR_NAME, SIA_XR_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_192( SIA_XT, SIA_XT_NAME, SIA_XT_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_193( SIA_XW, SIA_XW_NAME, SIA_XW_DESC, SiaEventCode::AddressField::zone);
-      
+
   static SiaEventCode SiaEventCode_194( SIA_YB, SIA_YB_NAME, SIA_YB_DESC, SiaEventCode::AddressField::line);
   static SiaEventCode SiaEventCode_195( SIA_YC, SIA_YC_NAME, SIA_YC_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_196( SIA_YD, SIA_YD_NAME, SIA_YD_DESC, SiaEventCode::AddressField::line);
@@ -2265,7 +2268,7 @@ void SIA::fillSiaEventCodeArray(void)
   static SiaEventCode SiaEventCode_210( SIA_YX, SIA_YX_NAME, SIA_YX_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_211( SIA_YY, SIA_YY_NAME, SIA_YY_DESC, SiaEventCode::AddressField::unused);
   static SiaEventCode SiaEventCode_212( SIA_YZ, SIA_YZ_NAME, SIA_YZ_DESC, SiaEventCode::AddressField::mfr_defined);
-      
+
   static SiaEventCode SiaEventCode_213( SIA_ZA, SIA_ZA_NAME, SIA_ZA_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_214( SIA_ZB, SIA_ZB_NAME, SIA_ZB_DESC, SiaEventCode::AddressField::zone);
   static SiaEventCode SiaEventCode_215( SIA_ZH, SIA_ZH_NAME, SIA_ZH_DESC, SiaEventCode::AddressField::zone);

@@ -1,3 +1,27 @@
+2019-06-10  Version 0.15
+
+   - Updated the build scripts so that everything compiles with
+     the current versions of Debian GNU/Linux and MSYS2 (for Windows).
+     There are also a few minor bugfixes but no new functionality was
+     added to the applications.
+
+     Noteable changes are:
+
+     Improved Debian packaging and XDG desktop entries for Linux.
+
+     On Linux, zlib has been locked to version 1.2.11 and is downloaded during the build.
+     (The reason for this is that pbuilder is currently unable to build the amd64 package
+     for Debian 'stretch' with the OS version of zlib1g.)
+
+     Openssl has been locked to the version 1.0.2 github branch.
+     libwebsockets has been locked to the 2.2-stable github branch.
+     Both openssl and libwebsockets are cloned from github during the build
+     and are staticly linked to openGalaxy.
+
+   - Commander.cpp: Added 'areaNumber' member to JSON_AREA_ARMED_STATE reply message.
+
+   - For Windows, the minimum OS version has become Windows 7 SP1
+
 2016-04-19  Version 0.14
 
    - Much better authentication than 'http basic auth'

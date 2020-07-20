@@ -2,7 +2,7 @@
   This file is part of openGalaxy.
 
   opengalaxy - a SIA receiver for Galaxy security control panels.
-  Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+  Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 2 as

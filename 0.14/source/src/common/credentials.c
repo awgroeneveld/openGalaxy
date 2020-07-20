@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -67,6 +67,8 @@
 /*
  * This is the format of the plaintext stored in an
  * encrypted_credentials_json_fmt formatted JSON object.
+ *
+ * TODO: password should be a hash of the password, do not store the password!
  */
 static const char* credentials_json_fmt =
   "{"
@@ -76,7 +78,7 @@ static const char* credentials_json_fmt =
   "}";
 
 /*
- * This is the format of the ciphertext as stored in the certificate.
+ * This is the format of the ciphertext as stored in the certificate (before base64 encoding it).
  */
 static const char* encrypted_credentials_json_fmt =
   "{"

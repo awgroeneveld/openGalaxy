@@ -3,7 +3,7 @@
 #  This file is part of openGalaxy.
 #
 #  opengalaxy - a SIA receiver for Galaxy security control panels.
-#  Copyright (C) 2015, Alexander Bruines <alexander.bruines@gmail.com>
+#  Copyright (C) 2015 - 2019, Alexander Bruines <alexander.bruines@gmail.com>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License version 2 as
@@ -57,10 +57,12 @@ RASPBIAN_MIRROR="http://mirrordirector.raspbian.org/raspbian/"
 RASPBIAN_KEYRING="raspbian-archive-keyring_20120528.2_all.deb"
 
 DEBIAN_MIRROR="http://httpredir.debian.org/debian/"
-DEBIAN_KEYRING="debian-archive-keyring_2014.3_all.deb"
+DEBIAN_KEYRING="debian-archive-keyring_2019.1_all.deb"
 
 UBUNTU_MIRROR="http://nl.archive.ubuntu.com/ubuntu/"
 UBUNTU_KEYRING="ubuntu-keyring_2012.05.19_all.deb"
+
+PKG_EXTRA_PACKAGES="debhelper autotools-dev openssl ca-certificates xz-utils autoconf automake libtool git libgtk-3-dev vim-common cmake libcap-dev wget xdg-utils policykit-1"
 
 function on_error {
  echo "Caught error, aborting"
@@ -92,7 +94,7 @@ function help {
 #   When cross-compiling, 'arch' must be supported by qemu.
 #
 # Example:
-#   $(basename $0) raspbian jessie armhf opengalaxy-0.12.tar.xz
+#   $(basename $0) raspbian jessie armhf opengalaxy-0.15.tar.xz
 #
 EOF
 }
@@ -164,6 +166,7 @@ dpkg -l libtool >/dev/null 2>&1 || {
 }
 
 # test for and install archive keyring and write a pbuilder configuration file
+echo "Writing pbuilderrc."
 cat <<EOF >pbuilderrc
 #!/bin/sh
 set -e
@@ -171,12 +174,14 @@ OS="$OS"
 DIST="$DIST"
 ARCH="$ARCH"
 EOF
+
 case "$OS" in
- debian)
-  dpkg -l debian-archive-keyring >/dev/null 2>&1 || {
+debian)
+  test x"`dpkg -l debian-archive-keyring | tail -n1 | awk '{print $1}'`" == x"ii" || {
    echo "Installing package: debian-archive-keyring"
    wget $DEBIAN_MIRROR/pool/main/d/debian-archive-keyring/$DEBIAN_KEYRING
    sudo dpkg -i $DEBIAN_KEYRING
+   rm $DEBIAN_KEYRING
   }
   cat <<EOF >>pbuilderrc
 KEYRING="/usr/share/keyrings/debian-archive-keyring.gpg"
@@ -184,11 +189,12 @@ MIRROR="$DEBIAN_MIRROR"
 COMPONENTS="main contrib non-free"
 EOF
   ;;
- ubuntu)
-  dpkg -l ubuntu-archive-keyring >/dev/null 2>&1 || {
+ubuntu)
+  test x"`dpkg -l ubuntu-archive-keyring | tail -n1 | awk '{print $1}'`" == x"ii" || {
    echo "Installing package: ubuntu-archive-keyring"
    wget $UBUNTU_MIRROR/pool/main/u/ubuntu-keyring/$UBUNTU_KEYRING
    sudo dpkg -i $UBUNTU_KEYRING
+   rm $UBUNTU_KEYRING
   }
   cat <<EOF >>pbuilderrc
 KEYRING="/usr/share/keyrings/ubuntu-archive-keyring.gpg"
@@ -196,11 +202,12 @@ MIRROR="$UBUNTU_MIRROR"
 COMPONENTS="main restricted universe multiverse"
 EOF
   ;;
- raspbian)
-  dpkg -l raspbian-archive-keyring >/dev/null 2>&1 || {
+raspbian)
+  test x"`dpkg -l raspbian-archive-keyring | tail -n1 | awk '{print $1}'`" == x"ii" || {
    echo "Installing package: raspbian-archive-keyring"
    wget $RASPBIAN_MIRROR/pool/main/r/raspbian-archive-keyring/$RASPBIAN_KEYRING
    sudo dpkg -i $RASPBIAN_KEYRING
+   rm $RASPBIAN_KEYRING
   }
   cat <<EOF >>pbuilderrc
 KEYRING="/usr/share/keyrings/raspbian-archive-keyring.gpg"
@@ -208,23 +215,48 @@ MIRROR="$RASPBIAN_MIRROR"
 COMPONENTS="main contrib non-free"
 EOF
   ;;
- *)
+*)
   help
   echo "Unknown operating system ($OS)!"
   false
   ;;
 esac
+
 cat <<'EOF' >>pbuilderrc
 NAME="$OS-$DIST-$ARCH"
+PBUILDERSATISFYDEPENDSCMD="/usr/lib/pbuilder/pbuilder-satisfydepends-classic"
+APTCACHEHARDLINK="no"
 DEBOOTSTRAPOPTS=("${DEBOOTSTRAPOPTS[@]}" "--keyring=$KEYRING" "--arch=$ARCH")
 BASETGZ="/var/cache/pbuilder/$NAME-base.tgz"
 DISTRIBUTION="$DIST"
-BUILDRESULT="/var/cache/pbuilder/$NAME/result/"
 APTCACHE="/var/cache/pbuilder/$NAME/aptcache/"
 BUILDPLACE="/var/cache/pbuilder/build"
 HOOKDIR="/var/cache/pbuilder/hook.d/"
 USENETWORK=yes
 EOF
+
+# pre-add the packages required to build our package to the base tarball.
+EXTRAPACKAGES="$PKG_EXTRA_PACKAGES"
+
+# cross-compiling x86 <=> x86_64 requires multilib gcc in the chroot!
+[ "x$ARCH" != "x$(dpkg --print-architecture)" ] && {
+ [ "x$ARCH" = "xi386" ] && {
+  [ "x$(dpkg --print-architecture)" = "xamd64" ] && {
+EXTRAPACKAGES="gcc-multilib g++-multilib $PKG_EXTRA_PACKAGES"
+  }
+ }
+ [ "x$ARCH" = "xamd64" ] && {
+  [ "x$(dpkg --print-architecture)" = "xi386" ] && {
+EXTRAPACKAGES="gcc-multilib g++-multilib $PKG_EXTRA_PACKAGES"
+  }
+ }
+}
+
+cat <<EOF >>pbuilderrc
+BUILDRESULT="`readlink -f .`"
+EXTRAPACKAGES="$EXTRAPACKAGES"
+EOF
+
 source ./pbuilderrc
 
 [ ! -f "$SOURCE" ] && {
@@ -261,9 +293,11 @@ cp -v $SOURCE $package_source
 [ ! -f /var/cache/pbuilder/$NAME-base.tgz ] && {
  cat <<EOF
 #
-# Please wait while a pbuilder base tarball is created...
+# Please wait while a pbuilder base tarball is created for $OS-$DIST-$ARCH...
 #
 EOF
+ # Make sure that the pbuilder directories exist in /var/cache/pbuilder/...
+ sudo mkdir -p /var/cache/pbuilder/{build,hook.d,$NAME/{aptcache,result}}
  # Make sure we only use qemu when not compiling for the hosts architecture
  if [ "x$ARCH" = "x$(dpkg --print-architecture)" ]; then
   sudo pbuilder --create --keyring $KEYRING --mirror $MIRROR --configfile `pwd`/pbuilderrc
@@ -277,7 +311,7 @@ tar xf ./$package_source
 
 # build the package (in the chroot)
 cd "${upstream_name}-${upstream_version}"
-pdebuild --configfile `pwd`/../pbuilderrc
+pdebuild --configfile ../pbuilderrc -- --debbuildopts -j
 cd ..
 
 # remove the source tree after a successfull build
@@ -285,8 +319,7 @@ rm -fR "${upstream_name}-${upstream_version}"
 
 cat <<EOF
 #
-# The .deb files are in /var/cache/pbuilder/$NAME/result/...
+# The .deb files are in the current directory...
 #
 EOF
-
 

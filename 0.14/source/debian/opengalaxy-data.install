@@ -1,2 +1,4 @@
 etc/galaxy/*
 usr/share/galaxy/www/*
+usr/share/galaxy/opengalaxy-icon.png
+

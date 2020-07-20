@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -467,19 +467,19 @@ gtk_entry_set_text( server, "localhost" );
 
 void G_MODULE_EXPORT cb_upload_info_dialog_onClose( GtkWindow *_this, gpointer user_data )
 {
-puts("cb_upload_info_dialog_onClose");
+//puts("cb_upload_info_dialog_onClose");
   gtk_widget_destroy( GTK_WIDGET( _this ) );
 }
 
 void G_MODULE_EXPORT cb_upload_info_dialog_onDestroy( GtkWindow *_this, gpointer user_data )
 {
-puts("cb_upload_info_dialog_onDestroy");
+//puts("cb_upload_info_dialog_onDestroy");
   gtk_widget_set_sensitive( button_upload, TRUE );
 }
 
 void show_upload_info_dialog(int success)
 {
-puts("show_upload_info_dialog");
+//puts("show_upload_info_dialog");
   waiting_for_websocket = 0;
   GtkBuilder *builder = gtk_builder_new();
   if( 0 == gtk_builder_add_from_string( builder, (const gchar *)ca_upload_info_glade, ca_upload_info_glade_len, NULL ) ){
@@ -497,20 +497,20 @@ puts("show_upload_info_dialog");
   g_signal_connect( G_OBJECT( dialog ), "destroy",  G_CALLBACK( cb_upload_info_dialog_onDestroy ), NULL );
 
   gtk_widget_show_all( GTK_WIDGET( dialog ) );
-puts("show_upload_info_dialog done");
+//puts("show_upload_info_dialog done");
 }
 
 // This function is a our communication between the gtk and the websocket threads
 // This way do not have to call gtk functions from the websocket thread...
 gboolean G_MODULE_EXPORT waitForWebsocket(gpointer user_data)
 {
-puts("waitForWebsocket");
+//puts("waitForWebsocket");
   g_mutex_lock(&callback_mutex);
 
   if(!waiting_for_websocket){
     waiting_for_websocket_tag = 0;
     g_mutex_unlock(&callback_mutex);
-puts("waitForWebsocket done");
+//puts("waitForWebsocket done");
     return FALSE;
   }
 
@@ -529,7 +529,7 @@ puts("waitForWebsocket done");
   g_mutex_unlock(&callback_mutex);
   g_thread_yield();
 
-puts("waitForWebsocket wait");
+//puts("waitForWebsocket wait");
   return TRUE; // keep waiting
 }
 
@@ -565,7 +565,7 @@ void G_MODULE_EXPORT button_UploadCerts( GtkWidget *widget, gpointer data )
 
 void send_certs(void)
 {
-printf("%s\n",__func__);
+//printf("%s\n",__func__);
 
   EVP_PKEY *sign_key = NULL, *encrypt_key = NULL;
   char *json;
@@ -610,7 +610,7 @@ exit:
 // while trying to (re)connect
 static void callback_connecting(void* user)
 {
-  puts("Connecting...");
+//puts("Connecting...");
   gtk_widget_set_sensitive( button_upload, FALSE );
 }
 
@@ -618,7 +618,7 @@ static void callback_connecting(void* user)
 // when the connection is established
 static void callback_online(void* user)
 {
-  puts("Online...");
+//puts("Online...");
   int s = 0;
   g_mutex_lock(&callback_mutex);
 
@@ -640,14 +640,14 @@ static void callback_online(void* user)
 // when we disconnected from the server
 static void callback_offline(void* user)
 {
-  puts("Offline...");
+//puts("Offline...");
 }
 
 // this is called by the websocket thread:
 // when we receive data
 static void callback_receive(const char* in, void* user)
 {
-  puts("Receive...");
+//puts("Receive...");
   g_mutex_lock(&callback_mutex);
 
   json_item *i;
@@ -710,19 +710,19 @@ static void callback_receive(const char* in, void* user)
     case -1:
       break;
     default:
-printf("Message reason = %d\n", typeId);
+//printf("Message reason = %d\n", typeId);
       break;
   }
 
   g_free(typeDesc);
   g_free(replyText);
   g_mutex_unlock(&callback_mutex);
-puts("Receive done...");
+//puts("Receive done...");
 }
 
 static void callback_connect_error(const char* address, void* user)
 {
-  puts("Connect Error...");
+//puts("Connect Error...");
   Websocket_AsyncDisconnect();
   _gtk_display_error_dialog( GTK_WIDGET(user), "Error", "Could not connect to the openGalaxy server at '%s'", address);
   gtk_widget_set_sensitive( button_upload, TRUE );

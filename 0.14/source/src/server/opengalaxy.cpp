@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -49,7 +49,7 @@ static const char* header1 =
   "openGalaxy " VERSION " - SIA receiver for Galaxy security control panels.";
 
 static const char* header2 =
-  "Copyright (C) 2015-2016 Alexander Bruines <" PACKAGE_BUGREPORT ">";
+  "Copyright (C) 2015-2019 Alexander Bruines <" PACKAGE_BUGREPORT ">";
 
 static const char* header3 =
   "License: GNU GPL v2+ with OpenSSL exception.";
@@ -62,14 +62,13 @@ static struct option cmd_line_options[] = {
     { "disable-ssl",            no_argument,       nullptr, 'd' },
     { "disable-password",       no_argument,       nullptr, 'p' },
     { "disable-auto-logoff",    no_argument,       nullptr, 'a' },
+    { "monitor-ppid",           no_argument,       nullptr, 'm' },
     { NULL, 0, 0, 0 }
   };
 
 static const char* synopsis =
   "\n"
-  "Synopsis: opengalaxy [-h] [-l] "
-  "[-v] "
-  "[-n] [-d] [-a]"
+  "Synopsis: opengalaxy [-h] [-l] [-v] [-n] [-d] [-a] [-m]"
   "\n"
   "\n"
   " -h or --help\t\t\tPrints this help text and exit.\n"
@@ -81,6 +80,8 @@ static const char* synopsis =
   "\t\t\t\tand password to log on (implies -a).\n"
   " -a or --disable-auto-logoff\tDisable automaticly logging off clients\n"
   "\t\t\t\twhen they have been inactive for a while.\n"
+  " -m or --monitor-ppid\t\tMonitor the parent process and exit\n"
+  "\t\t\t\tif it has terminated."
   "\n";
 
 static const char* licence =
@@ -333,7 +334,7 @@ bool context_options::parse_command_line(int argc, char *argv[])
   bool quit = false;
 
   while( n >= 0 ){
-    n = getopt_long( argc, argv, "hlnvdpa"
+    n = getopt_long( argc, argv, "hlnvdpam"
       , cmd_line_options, &opt_index
     );
     if( n < 0 ) continue;
@@ -366,6 +367,9 @@ bool context_options::parse_command_line(int argc, char *argv[])
         break;
       case 'a':
         auto_logoff = 0;
+        break;
+      case 'm':
+        monitor_ppid = 1;
         break;
       default:
         quit = true;

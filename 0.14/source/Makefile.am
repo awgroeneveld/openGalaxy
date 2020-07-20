@@ -1,5 +1,5 @@
 # opengalaxy - a SIA receiver for Galaxy security control panels.
-# Copyright (C) 2015, Alexander Bruines <alexander.bruines@gmail.com>
+# Copyright (C) 2015 - 2019, Alexander Bruines <alexander.bruines@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -26,15 +26,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-OPENSSL_SOURCE = --branch=OpenSSL_1_0_2-stable https://github.com/openssl/openssl.git
-OPENSSL_DIR = openssl
+# Version and location of the zlib sources
+ZLIB_VERSION = 1.2.11
+ZLIB_TGZ_SOURCE = zlib-$(ZLIB_VERSION).tar.gz
+ZLIB_DIR = $(basename $(basename $(ZLIB_TGZ_SOURCE)))
+ZLIB_TGZ_URL = http://prdownloads.sourceforge.net/libpng/$(ZLIB_TGZ_SOURCE)
 
-# source when installing from tar.gz
-WEBSOCKETS_SOURCE_FILE = $(srcdir)/external-libs/libwebsockets.tar.gz
-# If the above is left empty then we clone from github
-WEBSOCKETS_SOURCE = --branch=master https://github.com/warmcat/libwebsockets.git
-WEBSOCKETS_COMMIT = 57bb922f5617a054005c5ca4c64372dea8a73b23
+# The location of the unzipped/cloned source code (within $(builddir)) for OpenSSL and libwebsockets
+OPENSSL_DIR = openssl
 WEBSOCKETS_DIR = libwebsockets
+
+# OpenSSL source code to clone from github (if not using system libraries)
+# (To use another source distribution place your source code in $(builddir)/$(OPENSSL_DIR) before running make)
+OPENSSL_SOURCE = --branch=OpenSSL_1_0_2-stable https://github.com/openssl/openssl.git
+
+# Location of the libwebsockets source tar.gz
+WEBSOCKETS_SOURCE_FILE =
+
+# If the above is left empty and there is no existing sourcetree in $(builddir)/$(WEBSOCKETS_DIR) then we clone from github
+WEBSOCKETS_SOURCE = --branch=v2.2-stable https://github.com/warmcat/libwebsockets.git
+
+# And reset to this commit (if not left empty)
+WEBSOCKETS_COMMIT =
 
 ###
 ### List of glade XML files to be included with libgtkdata.a
@@ -72,7 +85,6 @@ OPENGALAXY_COMMON_SOURCE = \
  src/common/ssl_evp.c        src/common/ssl_evp.h \
  src/common/credentials.c    src/common/credentials.h \
  src/common/tmalloc.cpp      src/common/tmalloc.hpp
-
 
 ###
 ###  List of source files required for the server application
@@ -194,13 +206,18 @@ endif
 ###
 
 EXTRA_DIST = \
- doc/openGalaxy_Certificate_Manager.pdf \
+ bootstrap.sh debian doc/openGalaxy_Certificate_Manager.pdf \
  $(GLADE_FILES) $(CSS_FILES) \
- README COPYING changelog README-MSYS2.TXT README-BUILDING API.TXT README.QUICKSTART README-RaspberryPi\
+ README COPYING changelog \
+ README-MSYS2.TXT README-BUILDING API.TXT README.QUICKSTART README-RaspberryPi \
  external-libs example src/www \
  src/config/CreateDatabase.sql src/config/CreateUser.sql \
  src/ca/passphrase.txt  \
- mingw-build debian build-debs
+ mingw-build \
+ build-debs \
+ src/xdg/opengalaxy-icon.png \
+ src/xdg/org.freedesktop.policykit.opengalaxy.policy.in \
+ src/xdg/org.freedesktop.policykit.opengalaxy-ca.policy.in
 
 ###
 ### List of PDF documents created from man pages
@@ -266,6 +283,12 @@ endif
 BUILT_SOURCES =
 CLEANFILES =
 ###
+### Triggers building zlib
+###
+if ! HAVE_WINDOWS
+BUILT_SOURCES += $(builddir)/lib/usr/lib/libz.a
+endif
+###
 ### This triggers OpenSSL to be build from source,
 ### but only if we are not using the libraries the system provides.
 ###
@@ -277,12 +300,12 @@ BUILT_SOURCES += $(builddir)/lib/usr/bin/openssl
 endif
 endif
 ###
-### Build libwebsockets
+### Triggers building libwebsockets
 ###
 BUILT_SOURCES += $(builddir)/lib/usr/lib/libwebsockets.a
 ###
 ### Bake .c and .h files from the Glade and CSS data files found in src/glade
-### and put the in the libgtkdata.a library
+### and put them in the libgtkdata.a library
 ###
 if HAVE_EXTRAS
 BUILT_SOURCES += $(GLADE_C_FILES) $(GLADE_H_FILES) $(CSS_C_FILES) $(CSS_H_FILES) $(builddir)/src/libgtkdata.a
@@ -440,23 +463,24 @@ $(OPENSSL_DIR):
 #$(OPENSSL_DIR): $(OPENSSL_SOURCE)
 #	@tar xf $(OPENSSL_SOURCE)
 
+# note: windows build of openssl has no debug configure target....
 openssl.configured: $(OPENSSL_DIR)
 	-@cd $(OPENSSL_DIR) && rm -f Makefile
 if HAVE_WINDOWS
-if HAVE_AMD64_CPU
-	@cd $(OPENSSL_DIR) && ./Configure $(OPENSSL_DEBUG)mingw64 $(OPENSSL_CONF_ARGS64)
+if HAVE_I386_CPU
+	@cd $(OPENSSL_DIR) && ./Configure mingw $(OPENSSL_CONF_ARGS)
 else
-	@cd $(OPENSSL_DIR) && ./Configure $(OPENSSL_DEBUG)mingw $(OPENSSL_CONF_ARGS)
+	@cd $(OPENSSL_DIR) && ./Configure mingw64 $(OPENSSL_CONF_ARGS64)
 endif
 else
 if HAVE_X86_CPU
-if HAVE_AMD64_CPU
-	@cd $(OPENSSL_DIR) && ./Configure $(OPENSSL_DEBUG)linux-x86_64 $(OPENSSL_CONF_ARGS64)
+if HAVE_I386_CPU
+	cd $(OPENSSL_DIR) && ./Configure $(OPENSSL_DEBUG)linux-generic32 $(OPENSSL_CONF_ARGS)
 else
-	@cd $(OPENSSL_DIR) && ./Configure $(OPENSSL_DEBUG)linux-x32 $(OPENSSL_CONF_ARGS)
+	cd $(OPENSSL_DIR) && ./Configure $(OPENSSL_DEBUG)linux-x86_64 $(OPENSSL_CONF_ARGS64)
 endif
 else
-	@cd $(OPENSSL_DIR) && ./config $(OPENSSL_CONF_ARGS)
+	cd $(OPENSSL_DIR) && ./config $(OPENSSL_CONF_ARGS)
 endif
 endif
 if ! HAVE_WINDOWS
@@ -503,6 +527,8 @@ WEBSOCKETS_CMAKE_ARGS += \
   -DLWS_SSL_CLIENT_USE_OS_CA_CERTS=OFF \
   -DLWS_SSL_SERVER_WITH_ECDH_CERT=1 \
   -DLWS_HAVE_SSL_CTX_set1_param=1 \
+  -DLWS_ZLIB_LIBRARIES=`readlink -f ../../$(builddir)`/lib/usr/lib/libz.a \
+  -DLWS_ZLIB_INCLUDE_DIRS=`readlink -f ../../$(builddir)`/lib/usr/include \
   -DLWS_OPENSSL_LIBRARIES="$(OPENSSL_LIBRARY_DIR)/libssl.a;$(OPENSSL_LIBRARY_DIR)/libcrypto.a" \
   -DLWS_OPENSSL_INCLUDE_DIRS=$(OPENSSL_INCLUDE_DIR)
 endif
@@ -520,35 +546,44 @@ WEBSOCKETS_CMAKE_ARGS += \
 endif
 
 $(WEBSOCKETS_DIR):
-	[ "x$(WEBSOCKETS_SOURCE_FILE)" == "x" ] && git clone $(WEBSOCKETS_SOURCE) || tar xf $(WEBSOCKETS_SOURCE_FILE)
-	if [ "x$(WEBSOCKETS_SOURCE_FILE)" == "x" ]; then \
+	[ -z "$(WEBSOCKETS_SOURCE_FILE)" ] && git clone $(WEBSOCKETS_SOURCE) || tar xf $(WEBSOCKETS_SOURCE_FILE)
+	if [ -z "$(WEBSOCKETS_SOURCE_FILE)" ]; then \
 	 if [ "x$(WEBSOCKETS_COMMIT)" != "x" ]; then \
 	  cd $(WEBSOCKETS_DIR) && git reset --hard $(WEBSOCKETS_COMMIT); \
 	 fi; \
 	fi
-	cd $(WEBSOCKETS_DIR) && patch -p1 < ../$(srcdir)/external-libs/lws_get_ssl-master.patch
-if HAVE_WINDOWS
-	-cd $(WEBSOCKETS_DIR) && patch -p1 < ../$(srcdir)/external-libs/lws_msys2.patch
-endif
-
-#$(WEBSOCKETS_DIR): $(WEBSOCKETS_SOURCE)
-#	tar xf $(WEBSOCKETS_SOURCE)
-#	cd $(WEBSOCKETS_DIR) && patch -p1 < ../$(srcdir)/external-libs/lws_get_ssl-master.patch
 
 websockets.configured: $(WEBSOCKETS_DIR) $(WEBSOCKETS_SSL_DEPS)
 	-cd $(WEBSOCKETS_DIR) && mkdir build
-	cd $(WEBSOCKETS_DIR)/build && cmake $(WEBSOCKETS_CMAKE_ARGS) ..
+	cd $(WEBSOCKETS_DIR)/build && CFLAGS="" cmake $(WEBSOCKETS_CMAKE_ARGS) ..
 	touch websockets.configured
 
-$(builddir)/lib/usr/lib/libwebsockets.a: websockets.configured
+$(builddir)/lib/usr/lib/libwebsockets.a: websockets.configured $(builddir)/src/libcommon.a
 	cd $(WEBSOCKETS_DIR)/build && $(MAKE) && $(MAKE) install
+
+###
+### This section builds zlib
+###
+
+$(ZLIB_TGZ_SOURCE):
+	wget -q $(ZLIB_TGZ_URL)
+
+$(ZLIB_DIR): $(ZLIB_TGZ_SOURCE)
+	tar xf $(ZLIB_TGZ_SOURCE)
+	cd $(ZLIB_DIR) && ./configure --static --prefix=`readlink -f ../$(builddir)`/lib/usr
+
+$(builddir)/lib/usr/lib/libz.a: $(ZLIB_DIR)
+	cd $(ZLIB_DIR) && make && make install
+
+zlib: $(ZLIB_DIR)
 
 ###
 ### Utility rules
 ###
 
 maintainer-clean-local:
-	-rm -f aclocal.m4 Makefile.in config.h.in configure config.guess config.sub depcomp install-sh missing src/Makefile.in config.h.in~ compile
+	-rm -f aclocal.m4 Makefile.in config.h.in configure config.guess config.sub depcomp install-sh missing src/Makefile.in config.h.in~ compile ltmain.sh
+	-find . -type d -depth -empty -exec rmdir "{}" \;
 
 distclean-local:
 if HAVE_OPENSSL
@@ -556,16 +591,7 @@ if ! HAVE_SYSTEM_OPENSSL
 	-rm -fR lib openssl.configured $(OPENSSL_DIR)
 endif
 endif
-	-rm -fR websockets.configured libwebsockets
-
-clean-local:
-#if HAVE_OPENSSL
-#if ! HAVE_SYSTEM_OPENSSL
-#	-cd $(OPENSSL_DIR) && $(MAKE) clean
-#endif
-#endif
-#	-cd libwebsockets/build && $(MAKE) clean
-#	-rm -f lib/usr/lib/libwebsockets* lib/usr/include/libwebsockets.h lib/usr/include/lws_config.h lib/usr/bin/libwebsockets*
+	-rm -fR websockets.configured libwebsockets $(ZLIB_TGZ_SOURCE) $(ZLIB_DIR)
 
 
 ###
@@ -664,7 +690,7 @@ endif
 	@# Cairo runtime. Used internally by GDK-Pixbuf to draw surfaces.
 	$(INSTALL) "`find $(MINGW_DIR) -name 'libcairo-*.dll' -print -quit`" "$(bindir)"
 	@# Cairo GObject binding runtime.
-	$(INSTALL) "`find $(MINGW_DIR) -name 'libcairo-go*.dll' -print -quit`" "$(bindir)"
+	$(INSTALL) "`find $(MINGW_DIR) -name 'libcairo-gobject-*.dll' -print -quit`" "$(bindir)"
 	@# XML parser library runtime.
 	$(INSTALL) "`find $(MINGW_DIR) -name 'libexpat-*.dll' -print -quit`" "$(bindir)"
 	@# LibFFI runtime. Bridge between interpreted and compiled code.
@@ -711,33 +737,61 @@ endif
 	@# Harfbuzz runtime. OpenType text shaping engine
 	$(INSTALL) "`find $(MINGW_DIR) -name 'libharfbuzz-*.dll' -print -quit`" "$(bindir)"
 	@# XML parser library runtime.
-	$(INSTALL) "`find $(MINGW_DIR) -name 'libxml2-*.dll' -print -quit`" "$(bindir)"
+	@#$(INSTALL) "`find $(MINGW_DIR) -name 'libxml2-*.dll' -print -quit`" "$(bindir)"
 	@# PCRE runtime.
 	$(INSTALL) "`find $(MINGW_DIR) -name 'libpcre-*.dll' -print -quit`" "$(bindir)"
 	@# Graphite2 runtime
 	$(INSTALL) "`find $(MINGW_DIR) -name 'libgraphite*.dll' -print -quit`" "$(bindir)"
+	@# GNU FriBidi is an implementation of the Unicode Bidirectional Algorithm (bidi).
+	$(INSTALL) "`find $(MINGW_DIR) -name 'libfribidi-*.dll' -print -quit`" "$(bindir)"
+	@# LibThai is a set of Thai language support routines
+	$(INSTALL) "`find $(MINGW_DIR) -name 'libthai-*.dll' -print -quit`" "$(bindir)"
+	@# datrie - Double-Array Trie Library
+	$(INSTALL) "`find $(MINGW_DIR) -name 'libdatrie-*.dll' -print -quit`" "$(bindir)"
 	@# 
 	@# ---------- GTK+ optional libraries ---------- 
 	@# 
 	@# Cairo Script interpreter.
-	-$(INSTALL) "`find $(MINGW_DIR) -name 'libcairo-script-interpreter-*.dll' -print -quit`" "$(bindir)"
+	@#-$(INSTALL) "`find $(MINGW_DIR) -name 'libcairo-script-interpreter-*.dll' -print -quit`" "$(bindir)"
 	@# GTK+ Accessibility Implementation Library Utilities runtime.
-	-$(INSTALL) "`find $(MINGW_DIR) -name 'libgailutil-3-*.dll' -print -quit`" "$(bindir)"
+	@#-$(INSTALL) "`find $(MINGW_DIR) -name 'libgailutil-3-*.dll' -print -quit`" "$(bindir)"
 	@# GThread runtime. Provides GLib with thread management.
-	-$(INSTALL) "`find $(MINGW_DIR) -name 'libgthread-2.0-*.dll' -print -quit`" "$(bindir)"
+	@#-$(INSTALL) "`find $(MINGW_DIR) -name 'libgthread-2.0-*.dll' -print -quit`" "$(bindir)"
 	@# JPEG-2000 runtime. Renders JPEG-2000 images.
-	-$(INSTALL) "`find $(MINGW_DIR) -name 'libjpasper-*.dll' -print -quit`" "$(bindir)"
+	@#-$(INSTALL) "`find $(MINGW_DIR) -name 'libjpasper-*.dll' -print -quit`" "$(bindir)"
 	@# LibJPEG runtime. Renders classic JPEG images.
-	-$(INSTALL) "`find $(MINGW_DIR) -name 'libjpeg-*.dll' -print -quit`" "$(bindir)"
+	@#-$(INSTALL) "`find $(MINGW_DIR) -name 'libjpeg-*.dll' -print -quit`" "$(bindir)"
 	@# 
 	@# ---------- GTK+ - SVG support ---------- 
 	@# 
 	@# CSS2 Parsing library runtime. SVG support.
-	$(INSTALL) "`find $(MINGW_DIR) -name 'libcroco-0.6-*.dll' -print -quit`" "$(bindir)"
+	@#$(INSTALL) "`find $(MINGW_DIR) -name 'libcroco-0.6-*.dll' -print -quit`" "$(bindir)"
 	@# LibLZMA runtime. LZMA and XZ compression support. SVG support.
-	$(INSTALL) "`find $(MINGW_DIR) -name 'liblzma-*.dll' -print -quit`" "$(bindir)"
+	@#$(INSTALL) "`find $(MINGW_DIR) -name 'liblzma-*.dll' -print -quit`" "$(bindir)"
 	@# SVG runtime. Renders SVG images. SVG support.
-	$(INSTALL) "`find $(MINGW_DIR) -name 'librsvg-2-*.dll' -print -quit`" "$(bindir)"
+	@#$(INSTALL) "`find $(MINGW_DIR) -name 'librsvg-2-*.dll' -print -quit`" "$(bindir)"
+	@# 
+	@# ---------- Install the GDK pixbuf loaders ---------- 
+	@# 
+	echo "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*ani.dll' -print -quit`"
+	echo "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(MKDIR_P) "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders.cache' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`/.."
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*ani.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*bmp.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*gif.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*icns.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*ico.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*jasper.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*jpeg.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*png.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*pnm.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*qtif.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*svg.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*tga.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*tiff.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*xbm.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
+	$(INSTALL) "`find $(MINGW_DIR)/lib/gdk-pixbuf* -name '*xpm.dll' -print -quit`" "$(bindir)/`find $(MINGW_DIR)/lib/gdk-pixbuf* -name 'loaders' -print -quit | sed 's/\\$(MINGW_DIR)\///'`"
 	@# 
 	@# ---------- Install the openssl executable ---------- 
 	@# 
@@ -752,8 +806,16 @@ if HAVE_UPX
 	@# 
 	@# ---------- Compress the executables and DLLs with upx ---------- 
 	@# 
-	-find $(bindir) ! -name 'libgcc_s_???-*.dll' -name '*.[de][lx][le]' -print0 | xargs -0 upx -9
+	-find $(bindir) ! -name 'libgcc_s_???-*.dll'  ! -name 'vc_redist.exe' -name '*.[de][lx][le]' -print0 | xargs -0 upx -9
 endif
+endif
+	@# 
+	@# ---------- Copy the MS Visual Studio 2015 runtime distributeable ---------- 
+	@# 
+if HAVE_AMD64_CPU
+	-$(INSTALL) "$(srcdir)/external-libs/vc_redist.x64.exe" "$(bindir)/vc_redist.exe"
+else
+	-$(INSTALL) "$(srcdir)/external-libs/vc_redist.x86.exe" "$(bindir)/vc_redist.exe"
 endif
 if HAVE_NSIS
 	@# 
@@ -762,17 +824,19 @@ if HAVE_NSIS
 	$(INSTALL) "installer.nsi" "$(bindir)"
 	cd $(bindir) && makensis $(NSIS_ARGS) installer.nsi
 	mv $(bindir)/opengalaxy-v$(PACKAGE_VERSION)-Installer-$(INSTALLER_ARCH).exe .
+else
+	@echo # 
+	@echo # Could not create installation package with NSIS
+	@echo # 
 endif
 else
 	@# 
 	@# Extra installation tasks for Linux 
 	@# 
 	$(INSTALL) -D $(srcdir)/doc/openGalaxy_Certificate_Manager.pdf $(DESTDIR)$(datadir)/doc/galaxy/openGalaxy_Certificate_Manager.pdf
-if ! HAVE_DEBIAN
 	@# 
 	@# Add a group staff if none exists
 	getent group staff || addgroup staff
-endif
 	@# 
 	@# Set correct owner, group and permission for the shared data directory
 	chown $(username):staff "$(DESTDIR)$(src_ca_opengalaxy_ca_shareddir)"
@@ -791,18 +855,26 @@ endif
 	chown $(username):staff "$(DESTDIR)${localstatedir}/log/galaxy"
 	chmod u-s,u+rwx,g+rwx,g-s,o+rx,o-w "$(DESTDIR)${localstatedir}/log/galaxy"
 	@# 
-	@# (Since we can/must build packages when using Debian,
-	@# the specifics of menu entries are handled
-	@# by the .deb files and not in this Makefile.)
+	@# Install onto XDG compatible desktop
 	@# 
-if ! HAVE_DEBIAN
-	@# 
-	@# Install desktop files
-	$(INSTALL) -d $(DESTDIR)/usr/share/applications
-	$(INSTALL) $(builddir)/src/ca/opengalaxy-ca.desktop $(DESTDIR)/usr/share/applications
-	$(INSTALL) $(builddir)/src/server/opengalaxy-server.desktop $(DESTDIR)/usr/share/applications
-	$(INSTALL) $(builddir)/src/client/opengalaxy-client.desktop $(DESTDIR)/usr/share/applications
-endif
+	cat $(srcdir)/src/xdg/org.freedesktop.policykit.opengalaxy.policy.in | sed 's|\@bindir\@|$(bindir)|g' > $(builddir)/src/xdg/org.freedesktop.policykit.opengalaxy.policy
+	cat $(srcdir)/src/xdg/org.freedesktop.policykit.opengalaxy-ca.policy.in | sed 's|\@bindir\@|$(bindir)|g' > $(builddir)/src/xdg/org.freedesktop.policykit.opengalaxy-ca.policy
+	install -d $(DESTDIR)$(datadir)/galaxy/
+	install -d $(DESTDIR)$(datadir)/polkit-1/actions/
+	install -m 0644 $(builddir)/src/xdg/org.freedesktop.policykit.opengalaxy.policy $(DESTDIR)$(datadir)/polkit-1/actions/
+	install -m 0644 $(builddir)/src/xdg/org.freedesktop.policykit.opengalaxy-ca.policy $(DESTDIR)$(datadir)/polkit-1/actions/
+	install -m 0644 $(srcdir)/src/xdg/opengalaxy-icon.png $(DESTDIR)$(datadir)/galaxy
+	install -m 0644 $(builddir)/src/xdg/opengalaxy-server.desktop $(DESTDIR)$(datadir)/galaxy
+	install -m 0644 $(builddir)/src/xdg/opengalaxy-ca.desktop $(DESTDIR)$(datadir)/galaxy
+	install -m 0644 $(builddir)/src/xdg/opengalaxy-client.desktop $(DESTDIR)$(datadir)/galaxy
 endif
 
+install-xdg: install
+	@# 
+	@# Call XDG scripts in case we are not packaging
+	@#
+	xdg-icon-resource install --size 64 $(DESTDIR)$(datadir)/galaxy/opengalaxy-icon.png
+	xdg-desktop-menu install $(DESTDIR)$(datadir)/galaxy/opengalaxy-server.desktop
+	xdg-desktop-menu install $(DESTDIR)$(datadir)/galaxy/opengalaxy-ca.desktop
+	xdg-desktop-menu install $(DESTDIR)$(datadir)/galaxy/opengalaxy-client.desktop
 

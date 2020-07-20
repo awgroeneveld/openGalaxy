@@ -1,7 +1,7 @@
 /* This file is part of openGalaxy.
  *
  * opengalaxy - a SIA receiver for Galaxy security control panels.
- * Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+ * Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -92,15 +92,14 @@
 #include "log.h"
 
 // Buffer sizes for in- and outgoing data
-#define INPUT_BUFFER_SIZE 8192
-#define OUTPUT_BUFFER_SIZE 8192
+#define BUFFER_SIZE 8192
 
 
 // connection parameters used
 static int port = 0;
 static int use_ssl = 0;
 static int use_ssl_client = 0;
-static char address[8192];
+static char address[BUFFER_SIZE];
 
 static const char cipher_list[] =
   "-ALL:-COMPLEMENTOFALL:"
@@ -111,9 +110,9 @@ static const char cipher_list[] =
   "ECDHE-ECDSA-CHACHA20-POLY1305-SHA256:"  // ssllabs nr3/5 in chrome
   "ECDHE-RSA-CHACHA20-POLY1305-SHA256";    // ssllabs nr4/6 in chrome
 
-static char ca_cert[8192];
-static char client_cert[8192];
-static char client_cert_key[8192];
+static char ca_cert[BUFFER_SIZE];
+static char client_cert[BUFFER_SIZE];
+static char client_cert_key[BUFFER_SIZE];
 
 // default values for the connection parameters
 static char* default_address = "localhost";
@@ -196,20 +195,20 @@ static struct lws_protocols protocols[] = {
     "openGalaxy-http-protocol",
     callback_http,
     sizeof( struct websocket_per_session_data_http_protocol ),
-    INPUT_BUFFER_SIZE,
+    BUFFER_SIZE,
   },
   {
     "openGalaxy-websocket-protocol",
     callback_commander,
     sizeof( struct websocket_per_session_data_opengalaxy_protocol ),
-    OUTPUT_BUFFER_SIZE,
+    BUFFER_SIZE,
   },
   { NULL, NULL, 0, 0 } // end of list
 };
 
 
 // output buffer for sending commands (openGalaxy-command-protocol)
-//static unsigned char ws_output_buffer_internal[LWS_SEND_BUFFER_PRE_PADDING + OUTPUT_BUFFER_SIZE + LWS_SEND_BUFFER_POST_PADDING];
+//static unsigned char ws_output_buffer_internal[LWS_SEND_BUFFER_PRE_PADDING + BUFFER_SIZE + LWS_SEND_BUFFER_POST_PADDING];
 //static unsigned char *ws_output_buffer = &ws_output_buffer_internal[LWS_SEND_BUFFER_PRE_PADDING];
 
 
@@ -218,8 +217,8 @@ static guint delayed_remove_overlay_tag = 0;
 static int cmd_count = 0;
 
 
-static char Websocket_username[8192];
-static char Websocket_password[8192];
+static char Websocket_username[512];
+static char Websocket_password[512];
 static char Websocket_session_id[64];
 
 /*
@@ -322,7 +321,7 @@ err:
 // The returned string should not be modified or free'd
 static const char* ws_command_fifo_pop( void )
 {
-  static char buffer[8192];
+  static char buffer[BUFFER_SIZE];
   char *retv = NULL;
 
   ws_command_fifo_entry *e = commands_to_send;
@@ -392,7 +391,7 @@ static int callback_commander(
 )
 {
   //struct lws_context *context = lws_get_context(wsi);
-  unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + OUTPUT_BUFFER_SIZE + LWS_SEND_BUFFER_POST_PADDING];
+  unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + BUFFER_SIZE + LWS_SEND_BUFFER_POST_PADDING];
   int l, n;
 
   switch (reason) {
@@ -470,7 +469,7 @@ static int callback_commander(
         Log_printf( "websocket: Sending user credentials to server\n");
 
         char *p = (char*)&buf[LWS_SEND_BUFFER_PRE_PADDING];
-        snprintf( p, 8192, "%s\n%s\n%s",
+        snprintf( p, BUFFER_SIZE, "%s\n%s\n%s",
           Websocket_session_id, Websocket_username, Websocket_password
         );
         lws_write(
@@ -486,7 +485,7 @@ static int callback_commander(
         const char *cmd = ws_command_fifo_pop();
         if( cmd ){
           l = strlen( cmd );
-          if( l > OUTPUT_BUFFER_SIZE ) l = OUTPUT_BUFFER_SIZE;
+          if( l > BUFFER_SIZE ) l = BUFFER_SIZE;
           memcpy( &buf[LWS_SEND_BUFFER_PRE_PADDING], cmd, l );
           n = lws_write( wsi, &buf[LWS_SEND_BUFFER_PRE_PADDING], l, LWS_WRITE_TEXT );
           if( n < 0 ){ // (sanity check, test for write error)

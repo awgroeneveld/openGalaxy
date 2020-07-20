@@ -1,1 +1,5 @@
+etc/galaxy
 usr/share/galaxy/
+usr/share/galaxy/www
+usr/share/galaxy/ssl
+

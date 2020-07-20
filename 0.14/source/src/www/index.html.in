@@ -4,7 +4,7 @@
   This file is part of openGalaxy.
 
   opengalaxy - a SIA receiver for Galaxy security control panels.
-  Copyright (C) 2015 - 2016 Alexander Bruines <alexander.bruines@gmail.com>
+  Copyright (C) 2015 - 2019 Alexander Bruines <alexander.bruines@gmail.com>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 2 as
@@ -986,7 +986,7 @@ Leaving a virtual zone open is a bad idea, it will prevent areas from arming!
 <div class="small">
 <p class="nobr blue">
 <span class="fat">openGalaxy - A SIA receiver for Galaxy security control panels.<br/>
-Copyright &copy; 2015 - 2016 Alexander Bruines</span> &lt;<a href="mailto:alexander.bruines@gmail.com">alexander.bruines@gmail.com</a>&gt;
+Copyright &copy; 2015 - 2019 Alexander Bruines</span> &lt;<a href="mailto:alexander.bruines@gmail.com">alexander.bruines@gmail.com</a>&gt;
 </p>
 <p>
 This program is free software: you can redistribute it and/or modify

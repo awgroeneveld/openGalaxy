@@ -14,7 +14,7 @@ opengalaxy \- Send and receive SIA messages to and from a Galaxy security contro
 sends and receives SIA messages to a Galaxy security control panel using a serial port.
 A webinterface is also hosted on port \fB\fIprt\fR\fR and received messages are optionally send to a MySQL database and/or an SMTP server.
 .PP
-.B Users executing opengalaxy need to be a member of group 'staff',
+.B Users executing opengalaxy need to be 'root' or a member of group 'staff',
 .B and (at least on Debian GNU/Linux) users must be a member of group 'dialout' to be able to access a serial port!
 .B To use the email output plugin the user may need to be a member of group 'mail'.
 .PP

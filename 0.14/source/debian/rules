@@ -20,11 +20,12 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=-all
 
 # main packaging script based on dh7 syntax
 %:
-	dh $@  --with autotools-dev
+	dh $@
+#	dh $@  --with autotools-dev
 
 override_dh_auto_configure:
 	dh_auto_configure -- \
-    --with-system-openssl
+	  --with-system-openssl
 
 # debmake generated override targets
 # This is example for Cmake (See http://bugs.debian.org/641051 )
